@@ -81,7 +81,7 @@ main = do
 
     where handle args fhdl
             | Version `elem` (fst args) = do
-                    hPutStrLn stdout "0.0.1"
+                    hPutStrLn stdout "0.0.0"
             | Help `elem` (fst args) = do
                     appname <- getProgName
                     hPutStrLn stdout (usageInfo (header appname) options)

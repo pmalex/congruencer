@@ -15,6 +15,18 @@ This file describes **transition function** of automaton or **action function** 
  - First line contain all elements of automaton (or act). Here it\`s 7. Element name can consist of more than one letter, but without spaces.
  - Next lines contains action on specific semigroup element. For example, second line means: `1*s1 = 1`,  `1*s2 = 2`, etc.
 
+#### Compilation
+
+If you want to recompile this, you need **Haskell Stack**.
+
+On Windows or Linux for compile type:
+
+`stack clean && stack build`
+
+For run:
+
+`stack exec congruencer-exe -- test\test2 --help`
+
 #### Examples
 
 1. If you execute following command: `congruencer test2 -m` - program generates lattice of congruences and check holding modular identity. Output:
