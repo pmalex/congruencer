@@ -68,6 +68,9 @@ main = do
     args <- getArgs >>= parse
     {- print arguments -}
     -- hPutStrLn stdout (show args)
+    if args == ([],[])
+        then exitWith ExitSuccess
+        else return()
 
     {- open output file -}
     fhdl <- case findOutputFile (fst args) of
