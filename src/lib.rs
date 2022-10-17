@@ -14,19 +14,29 @@ pub struct Partition {
 
 impl Display for Partition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for class in &self.raw_partition {
-            write!(f, "(").unwrap();
-
-            let mut mask = 1 as BaseElement;
-
-            for i in 0..self.partition_size {
-                if (class & mask) != 0 {
-                    write!(f, "{}", (('a' as u8) + i) as char).unwrap();
+        if self.partition_size == self.raw_partition.len() as u8 {
+            write!(f, "Δ").unwrap();
+        } else if self.raw_partition.len() == 1 {
+            write!(f, "∇").unwrap();
+        } else {
+            for class in &self.raw_partition {
+                if class.is_power_of_two() {
+                    continue; // Do not print the powers of two.
                 }
 
-                mask <<= 1;
+                write!(f, "(").unwrap();
+
+                let mut mask = 1 as BaseElement;
+
+                for i in 0..self.partition_size {
+                    if (class & mask) != 0 {
+                        write!(f, "{}", (('a' as u8) + i) as char).unwrap();
+                    }
+
+                    mask <<= 1;
+                }
+                write!(f, ")").unwrap();
             }
-            write!(f, ")").unwrap();
         }
 
         Ok(())
@@ -80,18 +90,34 @@ impl Partition {
     }
 }
 
+pub fn generate_partitions(set_size: u32) -> Vec<Partition> {
+    assert!(set_size > 0 && set_size <= BaseElement::BITS);
+
+    (1..set_size).fold(
+        vec![Partition::new(vec![1], 1)],
+        |previous_generation, _| {
+            previous_generation
+                .into_par_iter()
+                .flat_map(|partition| partition.expand())
+                .collect::<Vec<Partition>>()
+        },
+    )
+}
+
 #[cfg(test)]
 mod test {
-    use super::Partition;
+    const BELL_NUMBERS: [u32; 16] = [
+        1, 1, 2, 5, 15, 52, 203, 877, 4140, 21147, 115975, 678570, 4213597, 27644437, 190899322,
+        1382958545,
+    ];
 
     #[test]
-    fn expand_partition() {
-        let partition = Partition::new(vec![0b00011, 0b01100, 0b10000], 5);
-
-        println!("{}", partition);
-
-        for partition in partition.expand() {
-            println!("{}", partition);
+    fn generate_partitions() {
+        for n in 1..13 {
+            assert_eq!(
+                super::generate_partitions(n).len() as u32,
+                BELL_NUMBERS[n as usize]
+            );
         }
     }
 }
