@@ -1,10 +1,18 @@
 [package]
 name = "congruencer"
 version = "0.1.0"
-authors = ["Алексей Пряничников <genary@ya.ru>"]
-edition = "2018"
+authors = ["Alexey Pryanichnikov <genary@ya.ru>"]
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[dev-dependencies]
+criterion = "0.4.0"
+
 [dependencies]
 rayon = "1.5.3"
+itertools = "0.10.5"
+
+[[bench]]
+name = "bench_1"
+harness = false
