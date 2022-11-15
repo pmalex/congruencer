@@ -1,11 +1,10 @@
-use itertools::{iproduct, Itertools};
 use rayon::{
     iter::IndexedParallelIterator,
     prelude::{IntoParallelIterator, ParallelIterator},
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::binary_operation::BinaryOperation;
+use crate::{binary_operation::BinaryOperation, poset};
 
 pub struct Lattice {
     sup: BinaryOperation,
@@ -69,44 +68,95 @@ impl Lattice {
     pub fn is_absorbing(&self) -> bool {
         let Self { sup, inf } = self;
 
-        (0..sup.get_number_of_elements())
-            .cartesian_product(0..sup.get_number_of_elements())
-            .collect_vec()
+        let number_of_elements = sup.get_number_of_elements();
+
+        (0..number_of_elements * number_of_elements)
             .into_par_iter()
-            .all(|(a, b)| inf.apply(a, sup.apply(a, b)) == a && sup.apply(a, inf.apply(a, b)) == a)
+            .all(|index_2d| {
+                let a = index_2d / number_of_elements;
+                let b = index_2d % number_of_elements;
+
+                inf.apply(a, sup.apply(a, b)) == a && sup.apply(a, inf.apply(a, b)) == a
+            })
     }
 
     pub fn is_modular(&self) -> bool {
-        todo!()
+        let Self { sup, inf } = self;
+
+        let number_of_elements = sup.get_number_of_elements();
+        let number_of_elements_squared = number_of_elements * number_of_elements;
+
+        (0..number_of_elements_squared * number_of_elements)
+            .into_par_iter()
+            .all(|index_3d| {
+                let z = index_3d / number_of_elements_squared;
+
+                let index_2d = index_3d % number_of_elements_squared;
+
+                let x = index_2d / number_of_elements;
+                let y = index_2d % number_of_elements;
+
+                if x <= y {
+                    // Checking that x ∨ (y ∧ z) = (x ∨ y) ∧ z.
+                    sup.apply(x, inf.apply(y, z)) == inf.apply(sup.apply(x, y), z)
+                } else {
+                    true
+                }
+            })
     }
 
     pub fn is_distributive(&self) -> bool {
-        debug_assert_eq!(
-            self.sup.get_number_of_elements(),
-            self.inf.get_number_of_elements()
-        );
+        let Self { sup, inf } = self;
 
-        let number_of_elements = self.sup.get_number_of_elements();
+        let number_of_elements = sup.get_number_of_elements();
+        let number_of_elements_squared = number_of_elements * number_of_elements;
 
-        iproduct!(
-            (0..number_of_elements),
-            (0..number_of_elements),
-            (0..number_of_elements)
-        )
-        .collect_vec()
-        .into_par_iter();
+        (0..number_of_elements_squared * number_of_elements)
+            .into_par_iter()
+            .all(|index_3d| {
+                let z = index_3d / number_of_elements_squared;
 
-        todo!()
+                let index_2d = index_3d % number_of_elements_squared;
+
+                let x = index_2d / number_of_elements;
+                let y = index_2d % number_of_elements;
+
+                // Checking that x ∧ (y ∨ z) = (x ∧ z) ∨ (x ∧ y)
+                //           and x ∨ (y ∧ z) = (x ∨ z) ∧ (x ∨ y).
+                inf.apply(x, sup.apply(y, z)) == sup.apply(inf.apply(x, z), inf.apply(x, y))
+                    && sup.apply(x, inf.apply(y, z)) == inf.apply(sup.apply(x, z), sup.apply(x, y))
+            })
+    }
+
+    /// Print lattice in the Graphiz Dot format.
+    pub fn print_dot<P: PartialOrd + std::fmt::Display>(&self, elements_set: &[P]) {
+        let Self { inf, .. } = self;
+
+        println!("graph lattice {{");
+        println!("\trankdir = TB;");
+        println!("\tratio = 0.75;");
+        println!("\tnode[shape = none];");
+        println!();
+
+        let number_of_elements = inf.get_number_of_elements();
+
+        for i in 0..number_of_elements {
+            for nearest_upper_bound in
+                poset::nearest_incomparable_lower_bounds(elements_set, &elements_set[i])
+            {
+                println!("\t\"{}\" -- \"{}\"", elements_set[i], nearest_upper_bound);
+            }
+        }
+
+        println!("}}");
     }
 }
 
-impl<T> Into<Lattice> for &[T]
+impl<P> From<&[P]> for Lattice
 where
-    T: PartialOrd + Sync,
+    P: PartialOrd + Sync,
 {
-    fn into(self) -> Lattice {
-        let poset = self;
-
+    fn from(poset: &[P]) -> Self {
         let number_of_elements = poset.len();
 
         let (sup, inf) = rayon::join(
@@ -123,10 +173,10 @@ where
                         *result_index = if element_a_index == element_b_index {
                             // sup(a, a) = a
                             element_a_index
-                        } else if &poset[element_a_index] <= &poset[element_b_index] {
+                        } else if poset[element_a_index] <= poset[element_b_index] {
                             // sup(a, b) = b for a <= b
                             element_b_index
-                        } else if &poset[element_b_index] <= &poset[element_a_index] {
+                        } else if poset[element_b_index] <= poset[element_a_index] {
                             // sup(a, b) = a for b <= a
                             element_a_index
                         } else {
@@ -137,16 +187,16 @@ where
                                     || None,
                                     |sup: Option<usize>, poset_element_index| {
                                         if let Some(sup_index) = sup {
-                                            if &poset[poset_element_index] <= &poset[sup_index]
-                                                && &poset[element_a_index] <= &poset[poset_element_index]
-                                                && &poset[element_b_index] <= &poset[poset_element_index]
+                                            if poset[poset_element_index] <= poset[sup_index]
+                                                && poset[element_a_index] <= poset[poset_element_index]
+                                                && poset[element_b_index] <= poset[poset_element_index]
                                             {
                                                 Some(poset_element_index)
                                             } else {
                                                 Some(sup_index)
                                             }
-                                        } else if &poset[element_a_index] <= &poset[poset_element_index]
-                                            && &poset[element_b_index] <= &poset[poset_element_index]
+                                        } else if poset[element_a_index] <= poset[poset_element_index]
+                                            && poset[element_b_index] <= poset[poset_element_index]
                                         {
                                             Some(poset_element_index)
                                         } else {
@@ -160,10 +210,10 @@ where
                                     partial_sup_index: Option<usize>| {
                                         if let Some(absolute_sup_index) = absolute_sup_index {
                                             if let Some(partial_sup_index) = partial_sup_index {
-                                                if &poset[absolute_sup_index] <= &poset[partial_sup_index] {
+                                                if poset[absolute_sup_index] <= poset[partial_sup_index] {
                                                     Some(absolute_sup_index)
-                                                } else if &poset[partial_sup_index]
-                                                    <= &poset[absolute_sup_index]
+                                                } else if poset[partial_sup_index]
+                                                    <= poset[absolute_sup_index]
                                                 {
                                                     Some(partial_sup_index)
                                                 } else {
@@ -172,10 +222,8 @@ where
                                             } else {
                                                 Some(absolute_sup_index)
                                             }
-                                        } else if let Some(partial_sup) = partial_sup_index {
-                                            Some(partial_sup)
                                         } else {
-                                            None
+                                            partial_sup_index
                                         }
                                     },
                                 )
@@ -198,10 +246,10 @@ where
                         *result_index = if element_a_index == element_b_index {
                             // inf(a, a) = a
                             element_a_index
-                        } else if &poset[element_a_index] >= &poset[element_b_index] {
+                        } else if poset[element_a_index] >= poset[element_b_index] {
                             // inf(a, b) = b for a >= b
                             element_b_index
-                        } else if &poset[element_b_index] >= &poset[element_a_index] {
+                        } else if poset[element_b_index] >= poset[element_a_index] {
                             // inf(a, b) = a for b >= a
                             element_a_index
                         } else {
@@ -212,16 +260,16 @@ where
                                     || None,
                                     |inf: Option<usize>, poset_element_index| {
                                         if let Some(inf_index) = inf {
-                                            if &poset[poset_element_index] >= &poset[inf_index]
-                                                && &poset[element_a_index] >= &poset[poset_element_index]
-                                                && &poset[element_b_index] >= &poset[poset_element_index]
+                                            if poset[poset_element_index] >= poset[inf_index]
+                                                && poset[element_a_index] >= poset[poset_element_index]
+                                                && poset[element_b_index] >= poset[poset_element_index]
                                             {
                                                 Some(poset_element_index)
                                             } else {
                                                 Some(inf_index)
                                             }
-                                        } else if &poset[element_a_index] >= &poset[poset_element_index]
-                                            && &poset[element_b_index] >= &poset[poset_element_index]
+                                        } else if poset[element_a_index] >= poset[poset_element_index]
+                                            && poset[element_b_index] >= poset[poset_element_index]
                                         {
                                             Some(poset_element_index)
                                         } else {
@@ -235,10 +283,10 @@ where
                                     partial_inf_index: Option<usize>| {
                                         if let Some(absolute_inf_index) = absolute_inf_index {
                                             if let Some(partial_inf_index) = partial_inf_index {
-                                                if &poset[absolute_inf_index] >= &poset[partial_inf_index] {
+                                                if poset[absolute_inf_index] >= poset[partial_inf_index] {
                                                     Some(absolute_inf_index)
-                                                } else if &poset[partial_inf_index]
-                                                    >= &poset[absolute_inf_index]
+                                                } else if poset[partial_inf_index]
+                                                    >= poset[absolute_inf_index]
                                                 {
                                                     Some(partial_inf_index)
                                                 } else {
@@ -247,10 +295,8 @@ where
                                             } else {
                                                 Some(absolute_inf_index)
                                             }
-                                        } else if let Some(partial_inf) = partial_inf_index {
-                                            Some(partial_inf)
                                         } else {
-                                            None
+                                            partial_inf_index
                                         }
                                     },
                                 )
@@ -349,5 +395,21 @@ mod test {
         let partitions_set = [nabla, abe_cd, ab_cde, ab, cd];
 
         let _lattice: Lattice = (&partitions_set[..]).into();
+    }
+
+    #[test]
+    fn is_distributive() {
+        let lattice: Lattice = Partition::new_partition_set(3).as_slice().into();
+
+        assert_eq!(lattice.is_lattice(), true);
+        assert_eq!(lattice.is_distributive(), false);
+    }
+
+    #[test]
+    fn is_modular() {
+        let lattice: Lattice = Partition::new_partition_set(3).as_slice().into();
+
+        assert_eq!(lattice.is_lattice(), true);
+        assert_eq!(lattice.is_modular(), false);
     }
 }
