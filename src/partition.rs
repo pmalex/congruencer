@@ -1,9 +1,9 @@
-use crate::act::Act;
 use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::{cmp::Ordering, fmt::Display};
 
 pub type BaseElement = u16;
 
+#[derive(Clone)]
 pub struct Partition {
     raw_partition: Vec<BaseElement>,
     partition_size: usize,
@@ -30,11 +30,9 @@ impl Partition {
         })
     }
 
-    pub fn new_congruence_set(set_size: usize, act: &Act) -> Vec<Partition> {
-        Self::new_partition_set(set_size)
-            .into_par_iter()
-            .filter(|partition| partition.is_congruence(act))
-            .collect()
+    #[inline]
+    pub fn par_iter(&self) -> rayon::slice::Iter<BaseElement> {
+        self.raw_partition.par_iter()
     }
 
     /// Generate a new set of partitions by adding a new element to the current partition.
@@ -45,14 +43,14 @@ impl Partition {
         } = self;
 
         // Binary repesentation of a new element that should be added to the partition.
-        let new_element = 1 << partition_size;
+        let new_element_position = 1 << partition_size;
 
         (0..raw_partition.len())
             .into_par_iter()
             .map(|class_number| {
                 let mut new_raw_partition = raw_partition.clone();
 
-                new_raw_partition[class_number] |= new_element;
+                new_raw_partition[class_number] |= new_element_position;
 
                 Self {
                     raw_partition: new_raw_partition,
@@ -65,7 +63,7 @@ impl Partition {
 
                 new_raw_partition.clone_from(raw_partition);
 
-                new_raw_partition.push(new_element);
+                new_raw_partition.push(new_element_position);
 
                 Self {
                     raw_partition: new_raw_partition,
@@ -75,30 +73,33 @@ impl Partition {
             .collect::<Vec<Partition>>()
     }
 
-    /// Returns true, if a partition is congruence.
-    pub fn is_congruence(&self, _act: &Act) -> bool {
-        // self.raw_partition.par_iter().all(|&class| {
-        //     debug_assert!(class > 0);
+    pub fn print(&self, alphabet: &str) {
+        assert_eq!(self.partition_size, alphabet.chars().count());
 
-        //     (0..act.get_semigroup_size())
-        //         .into_par_iter()
-        //         .all(|semigroup_element_index| {
-        //             let new_class = act.m(class, semigroup_element_index);
+        if self.partition_size == self.raw_partition.len() {
+            print!("Δ");
+        } else if self.raw_partition.len() == 1 {
+            print!("∇");
+        } else {
+            for class in &self.raw_partition {
+                if class.is_power_of_two() {
+                    continue; // Do not print the powers of two, because it's a one-element class.
+                }
 
-        //             debug_assert!(new_class > 0);
+                print!("(");
 
-        //             match self
-        //                 .raw_partition
-        //                 .par_iter()
-        //                 .find_any(|&&old_class| (new_class | old_class) == old_class)
-        //             {
-        //                 Some(_) => true,
-        //                 None => false,
-        //             }
-        //         })
-        // })
+                let mut mask = 1 as BaseElement;
 
-        todo!()
+                for c in alphabet.chars() {
+                    if class & mask == 0b1 {
+                        print!("{}", c);
+                    }
+
+                    mask <<= 1;
+                }
+                print!(")");
+            }
+        }
     }
 }
 
@@ -168,8 +169,6 @@ impl Display for Partition {
 
 #[cfg(test)]
 mod test {
-    use crate::act::Act;
-
     use super::Partition;
 
     const BELL_NUMBERS: [u32; 16] = [
@@ -218,39 +217,5 @@ mod test {
 
         assert_eq!(ab <= ac, false);
         assert_eq!(ab >= ac, false);
-    }
-
-    #[test]
-    fn is_congruence_1() {
-        #[rustfmt::skip]
-        let cayley_table = [
-            /* 0 */ 1, 0, 3, 2, 2,
-            /* 1 */ 3, 1, 1, 0, 2,
-            /* 2 */ 2, 3, 3, 1, 2,
-            /* 3 */ 3, 3, 2, 3, 2,
-        ];
-
-        let act = Act::from_cayley_table(&cayley_table, 5);
-
-        let partition = Partition::new(&[0b1010, 0b0101], 4);
-
-        assert_eq!(partition.is_congruence(&act), false);
-    }
-
-    #[test]
-    fn is_congruence_2() {
-        #[rustfmt::skip]
-        let cayley_table = [
-            /* 0 */ 1, 3, 2, 2,
-            /* 1 */ 3, 0, 2, 1,
-            /* 2 */ 3, 1, 2, 0,
-            /* 3 */ 3, 2, 0, 3,
-        ];
-
-        let act = Act::from_cayley_table(&cayley_table, 4);
-
-        let partition = Partition::new(&[0b1010, 0b0101], 4);
-
-        assert_eq!(partition.is_congruence(&act), true);
     }
 }

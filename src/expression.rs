@@ -1,4 +1,4 @@
-use crate::binary_operation::{BinaryOperation, Element};
+use crate::{binary_operation::BinaryOperation, ElementIndex};
 
 pub enum Expression {
     Variable(char),
@@ -6,7 +6,7 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn evaluate(&self) -> Element {
+    pub fn evaluate(&self) -> ElementIndex {
         todo!()
     }
 }

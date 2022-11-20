@@ -1,23 +1,23 @@
 use rayon::prelude::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use std::fmt::Display;
 
-/// Baisic element type of a binary operation.
-pub type Element = usize;
+use crate::{long_number::LongNumber, ElementIndex};
 
 pub struct BinaryOperation {
-    cayley_table: Vec<Element>,
+    cayley_table: Vec<ElementIndex>,
     number_of_elements: usize,
 }
 
 impl BinaryOperation {
-    pub fn new(number_of_elements: usize) -> Self {
+    /// Creates the zero semigroup.
+    pub fn zero(number_of_elements: usize) -> Self {
         Self {
-            cayley_table: vec![usize::MAX; number_of_elements * number_of_elements],
+            cayley_table: vec![0; number_of_elements * number_of_elements],
             number_of_elements,
         }
     }
 
-    pub fn from_cayley_table(table: &[Element], number_of_elements: usize) -> Self {
+    pub fn from_cayley_table(table: &[ElementIndex], number_of_elements: usize) -> Self {
         assert_eq!(table.len() % number_of_elements, 0);
 
         Self {
@@ -28,7 +28,7 @@ impl BinaryOperation {
 
     #[inline(always)]
     /// Apply a binary operation to an arguments.
-    pub fn apply(&self, a: Element, b: Element) -> Element {
+    pub fn apply(&self, a: ElementIndex, b: ElementIndex) -> ElementIndex {
         debug_assert!(a < self.number_of_elements);
         debug_assert!(b < self.number_of_elements);
 
@@ -72,13 +72,35 @@ impl BinaryOperation {
     }
 
     #[inline]
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<Element> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<ElementIndex> {
         self.cayley_table.iter_mut()
     }
 
     #[inline]
-    pub fn par_iter_mut(&mut self) -> rayon::slice::IterMut<Element> {
+    pub fn par_iter_mut(&mut self) -> rayon::slice::IterMut<ElementIndex> {
         self.cayley_table.par_iter_mut()
+    }
+}
+
+impl From<LongNumber> for BinaryOperation {
+    fn from(long_number: LongNumber) -> Self {
+        let LongNumber { digits, radix } = long_number;
+
+        // The number of elements in a binary operation.
+        let number_of_elements = {
+            let sqrt = (digits.len() as f32) as usize;
+
+            assert_eq!(sqrt, digits.len());
+
+            sqrt
+        };
+
+        assert!(radix >= number_of_elements);
+
+        Self {
+            cayley_table: digits,
+            number_of_elements: radix, 
+        }
     }
 }
 
@@ -154,7 +176,7 @@ mod test {
 
     #[test]
     fn is_commutative() {
-        let binary_operation = BinaryOperation::new(20);
+        let binary_operation = BinaryOperation::zero(20);
 
         assert_eq!(
             binary_operation.is_commutative(),
@@ -164,7 +186,7 @@ mod test {
 
     #[test]
     fn is_associative() {
-        let mut binary_operation = BinaryOperation::new(20);
+        let mut binary_operation = BinaryOperation::zero(20);
 
         for element in binary_operation.iter_mut() {
             *element = 0;
