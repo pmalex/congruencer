@@ -104,8 +104,15 @@ impl Partition {
 }
 
 impl PartialEq for Partition {
-    fn eq(&self, _other: &Self) -> bool {
-        unimplemented!()
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.raw_partition
+            .iter()
+            .all(|partition| other.raw_partition.contains(partition))
+            && other
+                .raw_partition
+                .iter()
+                .all(|partition| self.raw_partition.contains(partition))
     }
 }
 

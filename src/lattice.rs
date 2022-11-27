@@ -6,17 +6,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::binary_operation::BinaryOperation;
 
-pub struct Lattice<P: PartialOrd> {
-    elements_set: Vec<P>,
-
+pub struct Lattice {
     sup: BinaryOperation,
     inf: BinaryOperation,
 }
 
-impl<P> Lattice<P>
-where
-    P: PartialOrd + Sync,
-{
+impl Lattice {
     /// Cheks the basic lattice identities.
     pub fn is_lattice(&self) -> bool {
         let Self { sup, inf, .. } = self;
@@ -73,7 +68,7 @@ where
     pub fn is_absorbing(&self) -> bool {
         let Self { sup, inf, .. } = self;
 
-        let number_of_elements = sup.get_number_of_elements();
+        let number_of_elements = sup.get_set_size();
 
         (0..number_of_elements * number_of_elements)
             .into_par_iter()
@@ -86,13 +81,9 @@ where
     }
 
     pub fn is_modular(&self) -> bool {
-        let Self {
-            sup,
-            inf,
-            elements_set,
-        } = self;
+        let Self { sup, inf } = self;
 
-        let number_of_elements = sup.get_number_of_elements();
+        let number_of_elements = sup.get_set_size();
         let number_of_elements_squared = number_of_elements * number_of_elements;
 
         (0..number_of_elements_squared * number_of_elements)
@@ -105,26 +96,16 @@ where
                 let x = index_2d / number_of_elements;
                 let y = index_2d % number_of_elements;
 
-                // TODO: under construction
-                if elements_set[x] <= elements_set[y] {
-                    // Checking that x ∨ (y ∧ z) = (x ∨ y) ∧ z.
-                    let q = sup.apply(x, inf.apply(y, z)) == inf.apply(sup.apply(x, y), z);
-
-                    if !q {
-                        println!("x = {}, y = {}, z = {}", x, y, z);
-                    }
-
-                    q
-                } else {
-                    true
-                }
+                // x ∧ (y ∨ z) = x ∧ ((y ∧ (x ∨ z)) ∨ z)
+                inf.apply(x, sup.apply(y, z))
+                    == inf.apply(x, sup.apply(inf.apply(y, sup.apply(x, z)), z))
             })
     }
 
     pub fn is_distributive(&self) -> bool {
         let Self { sup, inf, .. } = self;
 
-        let number_of_elements = sup.get_number_of_elements();
+        let number_of_elements = sup.get_set_size();
         let number_of_elements_squared = number_of_elements * number_of_elements;
 
         (0..number_of_elements_squared * number_of_elements)
@@ -145,7 +126,7 @@ where
     }
 }
 
-impl<P> From<&[P]> for Lattice<P>
+impl<P> From<&[P]> for Lattice
 where
     P: PartialOrd + Sync + Clone,
 {
@@ -301,11 +282,7 @@ where
             },
         );
 
-        Lattice {
-            elements_set: poset.to_owned(),
-            sup,
-            inf,
-        }
+        Lattice { sup, inf }
     }
 }
 
@@ -319,7 +296,7 @@ mod test {
         for n in 2..=6usize {
             print!("\t{}...", n);
 
-            let lattice: Lattice<Partition> = Partition::new_partition_set(n).as_slice().into();
+            let lattice: Lattice = Partition::new_partition_set(n).as_slice().into();
 
             assert_eq!(lattice.is_lattice(), true);
 
@@ -358,7 +335,7 @@ mod test {
 
         let partitions_set = [abe_cd, ab_cde, ab, cd, delta];
 
-        let _lattice: Lattice<Partition> = (&partitions_set[..]).into();
+        let _lattice: Lattice = (&partitions_set[..]).into();
     }
 
     #[test]
@@ -391,12 +368,12 @@ mod test {
 
         let partitions_set = [nabla, abe_cd, ab_cde, ab, cd];
 
-        let _lattice: Lattice<Partition> = (&partitions_set[..]).into();
+        let _lattice: Lattice = (&partitions_set[..]).into();
     }
 
     #[test]
     fn is_distributive() {
-        let lattice: Lattice<Partition> = Partition::new_partition_set(3).as_slice().into();
+        let lattice: Lattice = Partition::new_partition_set(3).as_slice().into();
 
         assert_eq!(lattice.is_lattice(), true);
         assert_eq!(lattice.is_distributive(), false);
@@ -404,9 +381,9 @@ mod test {
 
     #[test]
     fn is_modular() {
-        let lattice: Lattice<Partition> = Partition::new_partition_set(3).as_slice().into();
+        let lattice: Lattice = Partition::new_partition_set(3).as_slice().into();
 
-        assert_eq!(lattice.is_lattice(), true);
-        assert_eq!(lattice.is_modular(), false);
+        assert!(lattice.is_lattice());
+        assert!(lattice.is_modular());
     }
 }

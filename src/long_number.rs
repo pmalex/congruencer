@@ -1,10 +1,11 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LongNumber {
     pub digits: Vec<usize>,
     pub radix: usize,
 }
 
 impl LongNumber {
+    #[inline]
     /// Creates a long zero.
     pub fn new(digits_number: usize, radix: usize) -> Self {
         assert!(radix > 0 && digits_number > 0);
@@ -15,6 +16,7 @@ impl LongNumber {
         }
     }
 
+    #[inline]
     /// Creates a long number from a raw slice.
     pub fn from_raw_slice(digits: &[usize], radix: usize) -> Self {
         Self {
@@ -22,23 +24,25 @@ impl LongNumber {
             radix,
         }
     }
+}
 
-    /// Returns incremental iterator.
-    pub fn into_inc_iter(self) -> LongNumberIncrementalIterator {
-        LongNumberIncrementalIterator {
-            long_number: self,
+#[derive(Clone)]
+pub struct LongNumbersIterator {
+    long_number: LongNumber,
+    is_end_reached: bool,
+}
+
+impl LongNumbersIterator {
+    #[inline]
+    pub fn new(digits_number: usize, radix: usize) -> Self {
+        Self {
+            long_number: LongNumber::new(digits_number, radix),
             is_end_reached: false,
         }
     }
 }
 
-#[derive(Clone)]
-pub struct LongNumberIncrementalIterator {
-    long_number: LongNumber,
-    is_end_reached: bool,
-}
-
-impl Iterator for LongNumberIncrementalIterator {
+impl Iterator for LongNumbersIterator {
     type Item = LongNumber;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -79,7 +83,7 @@ impl Iterator for LongNumberIncrementalIterator {
 fn long_binary() {
     let radix = 2;
 
-    let mut long_number_it = LongNumber::new(3, radix).into_inc_iter();
+    let mut long_number_it = LongNumbersIterator::new(3, radix);
 
     assert_eq!(
         long_number_it.next(),
@@ -122,7 +126,7 @@ fn long_binary() {
 fn long_ternary() {
     let radix = 3;
 
-    let mut long_number_it = LongNumber::new(2, radix).into_inc_iter();
+    let mut long_number_it = LongNumbersIterator::new(2, radix);
 
     assert_eq!(
         long_number_it.next(),
