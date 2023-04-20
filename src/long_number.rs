@@ -29,7 +29,7 @@ impl LongNumber {
 #[derive(Clone)]
 pub struct LongNumbersIterator {
     long_number: LongNumber,
-    is_end_reached: bool,
+    end_is_reached: bool,
 }
 
 impl LongNumbersIterator {
@@ -37,7 +37,7 @@ impl LongNumbersIterator {
     pub fn new(digits_number: usize, radix: usize) -> Self {
         Self {
             long_number: LongNumber::new(digits_number, radix),
-            is_end_reached: false,
+            end_is_reached: false,
         }
     }
 }
@@ -46,7 +46,7 @@ impl Iterator for LongNumbersIterator {
     type Item = LongNumber;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if !self.is_end_reached {
+        if !self.end_is_reached {
             let result = self.long_number.clone();
 
             // The `true` means that we need to do the exactly one increment.
@@ -69,7 +69,7 @@ impl Iterator for LongNumbersIterator {
             }
 
             if do_shift {
-                self.is_end_reached = true;
+                self.end_is_reached = true;
             }
 
             Some(result)

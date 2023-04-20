@@ -1,10 +1,9 @@
 use rayon::prelude::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use std::fmt::Display;
 
-use crate::{
-    long_number::{LongNumber, LongNumbersIterator},
-    ElementIndex,
-};
+use crate::ElementIndex;
+
+pub mod iterator;
 
 pub struct BinaryOperation {
     cayley_table: Vec<ElementIndex>,
@@ -20,8 +19,10 @@ impl BinaryOperation {
         }
     }
 
-    pub fn from_cayley_table(table: &[ElementIndex], set_size: usize) -> Self {
-        assert_eq!(table.len() % set_size, 0);
+    pub fn from_cayley_table(table: &[ElementIndex]) -> Self {
+        let set_size = (table.len() as f32).sqrt() as usize;
+
+        assert_eq!(set_size * set_size, table.len());
 
         Self {
             cayley_table: table.to_owned(),
@@ -85,73 +86,6 @@ impl BinaryOperation {
     }
 }
 
-pub struct BinaryOperationsIterator {
-    long_numbers_it: LongNumbersIterator,
-    set_size: usize,
-}
-
-impl BinaryOperationsIterator {
-    #[inline]
-    pub fn new() -> Self {
-        const START_SET_SIZE: usize = 2;
-
-        BinaryOperationsIterator {
-            long_numbers_it: LongNumbersIterator::new(
-                START_SET_SIZE * START_SET_SIZE,
-                START_SET_SIZE,
-            ),
-            set_size: START_SET_SIZE,
-        }
-    }
-}
-
-impl Default for BinaryOperationsIterator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Iterator for BinaryOperationsIterator {
-    type Item = BinaryOperation;
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(long_number) = self.long_numbers_it.next() {
-            Some(BinaryOperation::from(long_number))
-        } else {
-            let set_size = self.set_size;
-
-            self.long_numbers_it =
-                LongNumbersIterator::new((set_size + 1) * (set_size + 1), set_size + 1);
-            self.set_size = set_size + 1;
-
-            self.next()
-        }
-    }
-}
-
-impl From<LongNumber> for BinaryOperation {
-    fn from(long_number: LongNumber) -> Self {
-        let LongNumber { digits, radix } = long_number;
-
-        // The number of elements in a binary operation.
-        let set_size = {
-            let sqrt = (digits.len() as f32).sqrt() as usize;
-
-            assert_eq!(sqrt * sqrt, digits.len());
-
-            sqrt
-        };
-
-        assert!(radix >= set_size);
-
-        Self {
-            cayley_table: digits,
-            set_size: radix,
-        }
-    }
-}
-
 impl Display for BinaryOperation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.cayley_table.len() < self.set_size * self.set_size {
@@ -159,9 +93,16 @@ impl Display for BinaryOperation {
         } else {
             let width = (self.set_size as f32).log10().ceil() as usize + 1;
 
+            // Printing the first row.
             write!(f, "{:>width$}", "", width = width + 2).unwrap();
             for column in 0..self.set_size {
-                write!(f, "{:>width$}", column, width = width).unwrap();
+                write!(
+                    f,
+                    "{:>width$}",
+                    (b'a' + column as u8) as char,
+                    width = width
+                )
+                .unwrap();
             }
             writeln!(f).unwrap();
 
@@ -172,13 +113,13 @@ impl Display for BinaryOperation {
             writeln!(f).unwrap();
 
             for row in 0..self.set_size {
-                write!(f, "{:>width$} |", row, width = width).unwrap();
+                write!(f, "{:>width$} |", (b'a' + row as u8) as char, width = width).unwrap();
 
                 for column in 0..self.set_size {
                     write!(
                         f,
                         "{:>width$}",
-                        self.cayley_table[row * self.set_size + column],
+                        (b'a' + self.cayley_table[row * self.set_size + column] as u8) as char,
                         width = width
                     )
                     .unwrap();

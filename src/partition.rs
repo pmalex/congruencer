@@ -1,7 +1,30 @@
 use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
-use std::{cmp::Ordering, fmt::Display};
+use std::cmp::Ordering;
 
-pub type BaseElement = u16;
+/// Bounds the maximum amount of elements in a partition.
+type BaseElement = u16;
+
+mod static_partition {
+    // use super::BaseElement;
+
+    // pub struct Partition<const SIZE: usize>([BaseElement; SIZE]);
+
+    // impl<const SIZE: usize> Partition<SIZE> {
+    //     pub fn _new(raw_partition: [BaseElement; SIZE]) -> Self {
+    //         Self(raw_partition)
+    //     }
+
+    //     pub fn _bar(vec: Vec<usize>) -> Self {
+    //         let _vv = vec.as_slice();
+
+    //         todo!()
+
+    //         // Self(
+    //         //     vec.as_slice()
+    //         // )
+    //     }
+    // }
+}
 
 #[derive(Clone)]
 pub struct Partition {
@@ -18,21 +41,14 @@ impl Partition {
         }
     }
 
-    /// Generates all possible partitions of a n-element set.
-    pub fn new_partition_set(set_size: usize) -> Vec<Partition> {
-        assert!(set_size > 0 && set_size <= BaseElement::BITS as usize);
-
-        (1..set_size).fold(vec![Partition::new(&[1], 1)], |previous_generation, _| {
-            previous_generation
-                .into_par_iter()
-                .flat_map(|partition| partition.expand())
-                .collect::<Vec<Partition>>()
-        })
-    }
-
     #[inline]
     pub fn par_iter(&self) -> rayon::slice::Iter<BaseElement> {
         self.raw_partition.par_iter()
+    }
+
+    #[inline(always)]
+    pub fn size(&self) -> usize {
+        self.partition_size
     }
 
     /// Generate a new set of partitions by adding a new element to the current partition.
@@ -73,6 +89,7 @@ impl Partition {
             .collect::<Vec<Partition>>()
     }
 
+    /// Print a partition in a human-friendly form (using an alphabet).
     pub fn print(&self, alphabet: &str) {
         assert_eq!(self.partition_size, alphabet.chars().count());
 
@@ -81,7 +98,7 @@ impl Partition {
         } else if self.raw_partition.len() == 1 {
             print!("∇");
         } else {
-            for class in &self.raw_partition {
+            for &class in &self.raw_partition {                
                 if class.is_power_of_two() {
                     continue; // Do not print the powers of two, because it's a one-element class.
                 }
@@ -91,7 +108,7 @@ impl Partition {
                 let mut mask = 1 as BaseElement;
 
                 for c in alphabet.chars() {
-                    if class & mask == 0b1 {
+                    if class & mask != 0 {
                         print!("{}", c);
                     }
 
@@ -101,6 +118,18 @@ impl Partition {
             }
         }
     }
+}
+
+/// Generates all possible partitions of a n-element set.
+pub fn new_partitions_set(set_size: usize) -> Vec<Partition> {
+    assert!(set_size > 0 && set_size <= BaseElement::BITS as usize);
+
+    (1..set_size).fold(vec![Partition::new(&[1], 1)], |previous_generation, _| {
+        previous_generation
+            .into_par_iter()
+            .flat_map(|partition| partition.expand())
+            .collect::<Vec<Partition>>()
+    })
 }
 
 impl PartialEq for Partition {
@@ -143,40 +172,9 @@ impl PartialOrd for Partition {
     }
 }
 
-impl Display for Partition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.partition_size == self.raw_partition.len() {
-            write!(f, "Δ").unwrap();
-        } else if self.raw_partition.len() == 1 {
-            write!(f, "∇").unwrap();
-        } else {
-            for class in &self.raw_partition {
-                if class.is_power_of_two() {
-                    continue; // Do not print the powers of two, because it's a one-element class.
-                }
-
-                write!(f, "(").unwrap();
-
-                let mut mask = 1 as BaseElement;
-
-                for i in 0..self.partition_size {
-                    if (class & mask) != 0 {
-                        write!(f, "{}", (b'a' + i as u8) as char).unwrap();
-                    }
-
-                    mask <<= 1;
-                }
-                write!(f, ")").unwrap();
-            }
-        }
-
-        Ok(())
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::Partition;
+    use crate::partition::{self, Partition};
 
     const BELL_NUMBERS: [u32; 16] = [
         1, 1, 2, 5, 15, 52, 203, 877, 4140, 21147, 115975, 678570, 4213597, 27644437, 190899322,
@@ -187,7 +185,7 @@ mod test {
     fn generate_partitions() {
         for n in 1..12 {
             assert_eq!(
-                Partition::new_partition_set(n).len() as u32,
+                partition::new_partitions_set(n).len() as u32,
                 BELL_NUMBERS[n as usize]
             );
         }

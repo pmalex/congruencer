@@ -1,39 +1,35 @@
-use crate::{congruence::Congruence, partition::Partition, ElementIndex};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
-pub struct Act {
-    cayley_table: Vec<ElementIndex>,
-    columns: usize,
-}
+use crate::{congruence::Congruence, partition::Partition, ElementIndex};
 
-impl Act {
-    pub fn new_from_cayley_table(table: &[ElementIndex], columns: usize) -> Self {
-        assert!(columns > 0 && columns <= table.len());
-        assert!(!table.is_empty() && table.len() % columns == 0);
+pub struct Act<const ACT_SIZE: usize, const SEMIGROUP_SIZE: usize>(
+    [[ElementIndex; SEMIGROUP_SIZE]; ACT_SIZE],
+);
 
-        Self {
-            cayley_table: table.to_owned(),
-            columns,
-        }
-    }
+impl<const ACT_SIZE: usize, const SEMIGROUP_SIZE: usize> Act<ACT_SIZE, SEMIGROUP_SIZE> {
+    pub fn new(cayley_table: [[ElementIndex; SEMIGROUP_SIZE]; ACT_SIZE]) -> Self {
+        assert!(!cayley_table.is_empty());
 
-    #[inline(always)]
-    pub fn get_semigroup_size(&self) -> usize {
-        self.columns
+        Self(cayley_table)
     }
 
     /// Multiply a set of an act's elements by a semigroup element `s`.
     pub fn m(&self, mut class: ElementIndex, s: usize) -> ElementIndex {
-        // Check that the number (class) and the table are compatible.
-        debug_assert!(
-            ((ElementIndex::BITS - class.leading_zeros() - 1) as usize) // Position of the most significant unity.
-            <
-            self.cayley_table.len() / self.columns, // Number of rows.
-            "The class({:b}) is too big, the table does not contains enough values",
-            class
-        );
+        if cfg!(debug_assertions) {
+            let rows_number = self.0.len();
+            let columns_number = self.0[0].len();
 
-        debug_assert!(s < self.columns);
+            // Check that the number (class) and the table are compatible.
+            assert!(
+                ((ElementIndex::BITS - class.leading_zeros() - 1) as usize) // Position of the most significant unity.
+                <
+                rows_number,
+                "The class({:b}) is too big, the table does not contains enough values",
+                class
+            );
+
+            assert!(s < columns_number);
+        }
 
         let mut result = 0;
 
@@ -43,7 +39,7 @@ impl Act {
             }
 
             if class & 0b1 == 0b1 {
-                result |= 1 << self.cayley_table[i * self.columns + s];
+                result |= 1 << self.0[i][s];
             }
 
             class >>= 1;
@@ -53,14 +49,16 @@ impl Act {
     }
 }
 
-impl Congruence for Act {
+impl<const ACT_SIZE: usize, const SEMIGROUP_SIZE: usize> Congruence
+    for Act<ACT_SIZE, SEMIGROUP_SIZE>
+{
     fn is_congruence(&self, partition: &Partition) -> bool {
         let act = self;
 
         partition.par_iter().all(|&class| {
             debug_assert!(class > 0);
 
-            (0..act.get_semigroup_size()).into_par_iter().all(|s| {
+            (0..SEMIGROUP_SIZE).into_par_iter().all(|s| {
                 let new_class = act.m(class as ElementIndex, s) as u16;
 
                 debug_assert!(new_class > 0);
@@ -74,25 +72,27 @@ impl Congruence for Act {
 
     #[inline(always)]
     fn size(&self) -> usize {
-        self.cayley_table.len() / self.columns
+        ACT_SIZE
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{act::Act, congruence::Congruence, partition::Partition};
+    use crate::{congruence::Congruence, partition::Partition};
+
+    use super::Act;
 
     #[test]
     fn act_multiplication() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 0, 3, 2, 2,
-            /* 1 */ 3, 1, 1, 0, 2,
-            /* 2 */ 2, 3, 3, 1, 2,
-            /* 3 */ 3, 3, 2, 3, 2,
+            /* 0 */ [1, 0, 3, 2, 2],
+            /* 1 */ [3, 1, 1, 0, 2],
+            /* 2 */ [2, 3, 3, 1, 2],
+            /* 3 */ [3, 3, 2, 3, 2],
         ];
 
-        let act = Act::new_from_cayley_table(&cayley_table, 5);
+        let act = Act::new(cayley_table);
 
         assert_eq!(act.m(0b01010, 0), 0b01000);
         assert_eq!(act.m(0b01010, 1), 0b01010);
@@ -105,13 +105,13 @@ mod test {
     fn is_congruence_1() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 0, 3, 2, 2,
-            /* 1 */ 3, 1, 1, 0, 2,
-            /* 2 */ 2, 3, 3, 1, 2,
-            /* 3 */ 3, 3, 2, 3, 2,
+            /* 0 */ [1, 0, 3, 2, 2],
+            /* 1 */ [3, 1, 1, 0, 2],
+            /* 2 */ [2, 3, 3, 1, 2],
+            /* 3 */ [3, 3, 2, 3, 2],
         ];
 
-        let act = Act::new_from_cayley_table(&cayley_table, 5);
+        let act = Act::new(cayley_table);
 
         let partition = Partition::new(&[0b1010, 0b0101], 4);
 
@@ -122,13 +122,13 @@ mod test {
     fn is_congruence_2() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 3, 2, 2,
-            /* 1 */ 3, 0, 2, 1,
-            /* 2 */ 3, 1, 2, 0,
-            /* 3 */ 3, 2, 0, 3,
+            /* 0 */ [1, 3, 2, 2],
+            /* 1 */ [3, 0, 2, 1],
+            /* 2 */ [3, 1, 2, 0],
+            /* 3 */ [3, 2, 0, 3],
         ];
 
-        let act = Act::new_from_cayley_table(&cayley_table, 4);
+        let act = Act::new(cayley_table);
 
         let partition = Partition::new(&[0b1010, 0b0101], 4);
 

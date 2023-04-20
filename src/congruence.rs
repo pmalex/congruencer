@@ -1,6 +1,6 @@
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
-use crate::partition::Partition;
+use crate::partition::{self, Partition};
 
 pub trait Congruence {
     /// Returns true, if a partition of some algebraic object is a congruence.
@@ -14,7 +14,7 @@ pub trait Congruence {
     where
         Self: Sync,
     {
-        Partition::new_partition_set(self.size())
+        partition::new_partitions_set(self.size())
             .into_par_iter()
             .filter(|partition| self.is_congruence(partition))
             .collect()

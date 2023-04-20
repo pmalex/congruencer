@@ -289,14 +289,14 @@ where
 #[cfg(test)]
 mod test {
     use super::Lattice;
-    use crate::partition::Partition;
+    use crate::partition::{self, Partition};
 
     #[test]
     fn lattice_from_partitions() {
         for n in 2..=6usize {
             print!("\t{}...", n);
 
-            let lattice: Lattice = Partition::new_partition_set(n).as_slice().into();
+            let lattice: Lattice = partition::new_partitions_set(n).as_slice().into();
 
             assert_eq!(lattice.is_lattice(), true);
 
@@ -373,7 +373,7 @@ mod test {
 
     #[test]
     fn is_distributive() {
-        let lattice: Lattice = Partition::new_partition_set(3).as_slice().into();
+        let lattice: Lattice = partition::new_partitions_set(3).as_slice().into();
 
         assert_eq!(lattice.is_lattice(), true);
         assert_eq!(lattice.is_distributive(), false);
@@ -381,7 +381,7 @@ mod test {
 
     #[test]
     fn is_modular() {
-        let lattice: Lattice = Partition::new_partition_set(3).as_slice().into();
+        let lattice: Lattice = partition::new_partitions_set(3).as_slice().into();
 
         assert!(lattice.is_lattice());
         assert!(lattice.is_modular());
