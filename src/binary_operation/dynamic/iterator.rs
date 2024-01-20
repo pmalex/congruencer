@@ -1,18 +1,21 @@
 use super::BinaryOperation;
-use crate::long_number::{LongNumber, LongNumbersIterator};
+use crate::long_number::dynamic::{iterator::LongNaturalNumberIterator, LongNaturalNumber};
 
-pub struct BinaryOperationsIterator(LongNumbersIterator);
+pub struct BinaryOperationIterator(LongNaturalNumberIterator);
 
-impl BinaryOperationsIterator {
+impl BinaryOperationIterator {
     #[inline]
     pub fn new(set_size: usize) -> Self {
         assert!(set_size > 0);
 
-        BinaryOperationsIterator(LongNumbersIterator::new(set_size * set_size, set_size))
+        BinaryOperationIterator(LongNaturalNumberIterator::new(
+            set_size * set_size,
+            set_size,
+        ))
     }
 }
 
-impl Iterator for BinaryOperationsIterator {
+impl Iterator for BinaryOperationIterator {
     type Item = BinaryOperation;
 
     #[inline]
@@ -21,9 +24,9 @@ impl Iterator for BinaryOperationsIterator {
     }
 }
 
-impl From<LongNumber> for BinaryOperation {
-    fn from(long_number: LongNumber) -> Self {
-        let LongNumber { digits, radix } = long_number;
+impl From<LongNaturalNumber> for BinaryOperation {
+    fn from(long_number: LongNaturalNumber) -> Self {
+        let LongNaturalNumber { digits, radix } = long_number;
 
         // The number of elements in a binary operation.
         let set_size = {

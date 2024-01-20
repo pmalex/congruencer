@@ -4,7 +4,7 @@ use rayon::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::binary_operation::BinaryOperation;
+use crate::binary_operation::dynamic::BinaryOperation;
 
 pub struct Lattice {
     sup: BinaryOperation,
@@ -12,7 +12,7 @@ pub struct Lattice {
 }
 
 impl Lattice {
-    /// Cheks the basic lattice identities.
+    /// Проверка того, что на переданном объекте удовлетворяются элементарные решёточные тождества.
     pub fn is_lattice(&self) -> bool {
         let Self { sup, inf, .. } = self;
 
@@ -76,7 +76,7 @@ impl Lattice {
                 let a = index_2d / number_of_elements;
                 let b = index_2d % number_of_elements;
 
-                inf.apply(a, sup.apply(a, b)) == a && sup.apply(a, inf.apply(a, b)) == a
+                inf.call(a, sup.call(a, b)) == a && sup.call(a, inf.call(a, b)) == a
             })
     }
 
@@ -97,8 +97,8 @@ impl Lattice {
                 let y = index_2d % number_of_elements;
 
                 // x ∧ (y ∨ z) = x ∧ ((y ∧ (x ∨ z)) ∨ z)
-                inf.apply(x, sup.apply(y, z))
-                    == inf.apply(x, sup.apply(inf.apply(y, sup.apply(x, z)), z))
+                inf.call(x, sup.call(y, z))
+                    == inf.call(x, sup.call(inf.call(y, sup.call(x, z)), z))
             })
     }
 
@@ -120,8 +120,8 @@ impl Lattice {
 
                 // Checking that x ∧ (y ∨ z) = (x ∧ z) ∨ (x ∧ y)
                 //           and x ∨ (y ∧ z) = (x ∨ z) ∧ (x ∨ y).
-                inf.apply(x, sup.apply(y, z)) == sup.apply(inf.apply(x, z), inf.apply(x, y))
-                    && sup.apply(x, inf.apply(y, z)) == inf.apply(sup.apply(x, z), sup.apply(x, y))
+                inf.call(x, sup.call(y, z)) == sup.call(inf.call(x, z), inf.call(x, y))
+                    && sup.call(x, inf.call(y, z)) == inf.call(sup.call(x, z), sup.call(x, y))
             })
     }
 }
@@ -385,5 +385,21 @@ mod test {
 
         assert!(lattice.is_lattice());
         assert!(lattice.is_modular());
+    }
+
+    #[test]
+    fn is_not_distributive() {
+        let lattice: Lattice = partition::new_partitions_set(4).as_slice().into();
+
+        assert!(lattice.is_lattice());
+        assert!(!lattice.is_distributive());
+    }
+
+    #[test]
+    fn is_not_modular() {
+        let lattice: Lattice = partition::new_partitions_set(4).as_slice().into();
+
+        assert!(lattice.is_lattice());
+        assert!(!lattice.is_modular());
     }
 }

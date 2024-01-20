@@ -1,3 +1,5 @@
+//! Динамическая реализация структуры полигона.
+
 use crate::{congruence::Congruence, partition::Partition, ElementIndex};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
@@ -7,12 +9,13 @@ pub struct Act {
 }
 
 impl Act {
-    pub fn new_from_cayley_table(table: &[ElementIndex], columns: usize) -> Self {
-        assert!(columns > 0 && columns <= table.len());
-        assert!(!table.is_empty() && table.len() % columns == 0);
+    /// Создание структуры полигона из его таблицы умножения (таблицы Кэли).
+    pub fn new(cayley_table: &[ElementIndex], columns: usize) -> Self {
+        assert!(columns > 0 && columns <= cayley_table.len());
+        assert!(!cayley_table.is_empty() && cayley_table.len() % columns == 0);
 
         Self {
-            cayley_table: table.to_owned(),
+            cayley_table: cayley_table.to_owned(),
             columns,
         }
     }
@@ -80,7 +83,7 @@ impl Congruence for Act {
 
 #[cfg(test)]
 mod test {
-    use crate::{act_old::Act, congruence::Congruence, partition::Partition};
+    use crate::{act::dynamic::Act, congruence::Congruence, partition::Partition};
 
     #[test]
     fn act_multiplication() {
@@ -92,7 +95,7 @@ mod test {
             /* 3 */ 3, 3, 2, 3, 2,
         ];
 
-        let act = Act::new_from_cayley_table(&cayley_table, 5);
+        let act = Act::new(&cayley_table, 5);
 
         assert_eq!(act.m(0b01010, 0), 0b01000);
         assert_eq!(act.m(0b01010, 1), 0b01010);
@@ -111,7 +114,7 @@ mod test {
             /* 3 */ 3, 3, 2, 3, 2,
         ];
 
-        let act = Act::new_from_cayley_table(&cayley_table, 5);
+        let act = Act::new(&cayley_table, 5);
 
         let partition = Partition::new(&[0b1010, 0b0101], 4);
 
@@ -128,7 +131,7 @@ mod test {
             /* 3 */ 3, 2, 0, 3,
         ];
 
-        let act = Act::new_from_cayley_table(&cayley_table, 4);
+        let act = Act::new(&cayley_table, 4);
 
         let partition = Partition::new(&[0b1010, 0b0101], 4);
 

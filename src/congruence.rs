@@ -10,6 +10,7 @@ pub trait Congruence {
     fn size(&self) -> usize;
 
     #[inline]
+    /// Создание решётки конгруэнций из всевозможных разбиений конечного множества.
     fn new_congruence_set(&self) -> Vec<Partition>
     where
         Self: Sync,

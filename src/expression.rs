@@ -1,4 +1,4 @@
-use crate::{binary_operation::BinaryOperation, ElementIndex};
+use crate::{binary_operation::dynamic::BinaryOperation, ElementIndex};
 
 pub enum Expression {
     Variable(char),

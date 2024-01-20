@@ -1,3 +1,5 @@
+//! Пример построения решётки всевозможных разбиений конечного множества и вывода её в формате Graphiz Dot.
+
 use congruencer::{
     partition::{self, Partition},
     poset,
@@ -27,6 +29,5 @@ fn partitions_set_print_dot(partitions_set: &[Partition], alphabet: &str) {
 }
 
 fn main() {
-    // partitions_set_print_dot(&partition::new_partitions_set(4), "abcd");
     partitions_set_print_dot(&partition::new_partitions_set(5), "abcde");
 }

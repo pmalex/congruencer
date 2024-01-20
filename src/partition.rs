@@ -4,28 +4,6 @@ use std::cmp::Ordering;
 /// Bounds the maximum amount of elements in a partition.
 type BaseElement = u16;
 
-mod static_partition {
-    // use super::BaseElement;
-
-    // pub struct Partition<const SIZE: usize>([BaseElement; SIZE]);
-
-    // impl<const SIZE: usize> Partition<SIZE> {
-    //     pub fn _new(raw_partition: [BaseElement; SIZE]) -> Self {
-    //         Self(raw_partition)
-    //     }
-
-    //     pub fn _bar(vec: Vec<usize>) -> Self {
-    //         let _vv = vec.as_slice();
-
-    //         todo!()
-
-    //         // Self(
-    //         //     vec.as_slice()
-    //         // )
-    //     }
-    // }
-}
-
 #[derive(Clone)]
 pub struct Partition {
     raw_partition: Vec<BaseElement>,
@@ -98,7 +76,7 @@ impl Partition {
         } else if self.raw_partition.len() == 1 {
             print!("∇");
         } else {
-            for &class in &self.raw_partition {                
+            for &class in &self.raw_partition {
                 if class.is_power_of_two() {
                     continue; // Do not print the powers of two, because it's a one-element class.
                 }
@@ -120,7 +98,7 @@ impl Partition {
     }
 }
 
-/// Generates all possible partitions of a n-element set.
+/// Generates all possible partitions of an n-element set.
 pub fn new_partitions_set(set_size: usize) -> Vec<Partition> {
     assert!(set_size > 0 && set_size <= BaseElement::BITS as usize);
 
