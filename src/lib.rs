@@ -7,4 +7,5 @@ pub mod long_number;
 pub mod partition;
 pub mod poset;
 
+/// Тип номера (индекса) элемента.
 pub type ElementIndex = usize;

@@ -1,5 +1,6 @@
 pub mod iterator;
 
+/// Длинное натуральное число с фиксированным основанием.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LongNaturalNumber {
     pub digits: Vec<usize>,

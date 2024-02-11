@@ -9,6 +9,7 @@ pub struct Act<const ACT_SIZE: usize, const SEMIGROUP_SIZE: usize>(
 
 impl<const ACT_SIZE: usize, const SEMIGROUP_SIZE: usize> Act<ACT_SIZE, SEMIGROUP_SIZE> {
     /// Создание структуры полигона из его таблицы умножения (таблицы Кэли).
+    /// Строки обозначают элементы полигона, столбцы - элементы полугруппы.
     pub fn new(cayley_table: [[ElementIndex; SEMIGROUP_SIZE]; ACT_SIZE]) -> Self {
         assert!(!cayley_table.is_empty());
 

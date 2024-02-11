@@ -69,7 +69,11 @@ impl Partition {
 
     /// Print a partition in a human-friendly form (using an alphabet).
     pub fn print(&self, alphabet: &str) {
-        assert_eq!(self.partition_size, alphabet.chars().count());
+        assert_eq!(
+            self.partition_size,
+            alphabet.chars().count(),
+            "Число символов в алфавите должно быть равно числу элементов полигона!"
+        );
 
         if self.partition_size == self.raw_partition.len() {
             print!("Δ");
@@ -86,12 +90,15 @@ impl Partition {
                 let mut mask = 1 as BaseElement;
 
                 for c in alphabet.chars() {
+                    // Если соответствующий по номеру бит установлен, то печатаем символ
+                    // из алфавита, соответствующий ему.
                     if class & mask != 0 {
                         print!("{}", c);
                     }
 
                     mask <<= 1;
                 }
+
                 print!(")");
             }
         }
@@ -154,6 +161,7 @@ impl PartialOrd for Partition {
 mod test {
     use crate::partition::{self, Partition};
 
+    /// Первые 16 чисел Бэлла (число всевозможных разбиений конечного множества)
     const BELL_NUMBERS: [u32; 16] = [
         1, 1, 2, 5, 15, 52, 203, 877, 4140, 21147, 115975, 678570, 4213597, 27644437, 190899322,
         1382958545,
