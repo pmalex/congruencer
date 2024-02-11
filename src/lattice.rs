@@ -4,7 +4,7 @@ use rayon::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::binary_operation::dynamic::BinaryOperation;
+use crate::binary_operation::BinaryOperation;
 
 pub struct Lattice {
     sup: BinaryOperation,
@@ -97,8 +97,7 @@ impl Lattice {
                 let y = index_2d % number_of_elements;
 
                 // x ∧ (y ∨ z) = x ∧ ((y ∧ (x ∨ z)) ∨ z)
-                inf.call(x, sup.call(y, z))
-                    == inf.call(x, sup.call(inf.call(y, sup.call(x, z)), z))
+                inf.call(x, sup.call(y, z)) == inf.call(x, sup.call(inf.call(y, sup.call(x, z)), z))
             })
     }
 

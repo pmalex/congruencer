@@ -1,5 +1,5 @@
 use super::BinaryOperation;
-use crate::long_number::dynamic::{iterator::LongNaturalNumberIterator, LongNaturalNumber};
+use crate::long_number::{iterator::LongNaturalNumberIterator, LongNaturalNumber};
 
 pub struct BinaryOperationIterator(LongNaturalNumberIterator);
 

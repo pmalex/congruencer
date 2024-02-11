@@ -2,16 +2,16 @@
 //!
 //! В данном примере строится решётка конгруэнций различных унаров.
 
-use congruencer::{act::fixed::Act, congruence::Congruence};
+use congruencer::{act::Act, congruence::Congruence};
 
 #[rustfmt::skip]
 /// Унар из четырёх элементов.
-const UNAR_4: [[usize; 3]; 4] = [
-    //        a   a^2  a^3
-    /* x */ [ 1,   2,   3 ],
-    /* y */ [ 2,   3,   3 ],
-    /* z */ [ 3,   3,   3 ],
-    /* u */ [ 3,   3,   3 ],
+const UNAR_4: [&str; 12] = [
+    //       a   a^2  a^3
+    /* x */ "y", "z", "u",
+    /* y */ "z", "u", "u",
+    /* z */ "u", "u", "u",
+    /* u */ "u", "u", "u",
 ];
 
 #[rustfmt::skip]
@@ -37,31 +37,28 @@ const UNAR_6: [[usize; 5]; 6] = [
     /* w */ [ 5,   5,   5,   5,   5 ],
 ];
 
-fn print_unar_congruences<const ACT_SIZE: usize, const SEMIGROUP_SIZE: usize>(
-    unar_table: [[usize; SEMIGROUP_SIZE]; ACT_SIZE],
-    alphabet: &str,
-) {
-    let unar = Act::new(unar_table);
+// fn print_unar_congruences(act_elements: &[&str], unar_table: &[&str]) {
+//     let unar = Act::new(act_elements, unar_table);
 
-    let congruence_set = unar.new_congruence_set();
+//     let congruence_set = unar.new_congruence_set();
 
-    print!("{{");
+//     print!("{{");
 
-    for partition in congruence_set {
-        partition.print(alphabet);
-        print!("; ")
-    }
+//     for partition in congruence_set {
+//         partition.print(act_elements);
+//         print!("; ")
+//     }
 
-    println!("}}");
-}
+//     println!("}}");
+// }
 
 fn main() {
     print!("Конгруэнции унара из четырёх элементов: ");
-    print_unar_congruences(UNAR_4, "xyzu");
+    // print_unar_congruences(UNAR_4, "xyzu");
 
-    print!("Конгруэнции унара из пяти элементов: ");
-    print_unar_congruences(UNAR_5, "xyzuv");
+    // print!("Конгруэнции унара из пяти элементов: ");
+    // print_unar_congruences(UNAR_5, "xyzuv");
 
-    print!("Конгруэнции унара из шести элементов: ");
-    print_unar_congruences(UNAR_6, "xyzuvw");
+    // print!("Конгруэнции унара из шести элементов: ");
+    // print_unar_congruences(UNAR_6, "xyzuvw");
 }

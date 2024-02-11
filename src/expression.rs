@@ -2,7 +2,7 @@
 //! на произвольной решётке. И также это нужно для поиска тождеств, выполняющихся
 //! на произвольной решётке.
 
-use crate::{binary_operation::dynamic::BinaryOperation, ElementIndex};
+use crate::{binary_operation::BinaryOperation, ElementIndex};
 
 pub enum Expression {
     Variable(char),

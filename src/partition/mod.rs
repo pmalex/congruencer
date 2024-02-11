@@ -1,18 +1,21 @@
 use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::cmp::Ordering;
 
-/// Bounds the maximum amount of elements in a partition.
-type BaseElement = u16;
+/// Число бит в данном типе определеяет максимальное число элементов в разбиении.
+pub type BaseDataType = u32;
 
+/// Базовая структура разбиения конечного множества.
 #[derive(Clone)]
 pub struct Partition {
-    raw_partition: Vec<BaseElement>,
+    raw_partition: Vec<BaseDataType>,
     partition_size: usize,
 }
 
 impl Partition {
     #[inline]
-    pub fn new(raw_partition: &[BaseElement], partition_size: usize) -> Self {
+    pub fn new(raw_partition: &[BaseDataType], partition_size: usize) -> Self {
+        assert!(partition_size > 0 && partition_size <= BaseDataType::BITS as usize);
+
         Self {
             raw_partition: raw_partition.to_vec(),
             partition_size,
@@ -20,7 +23,7 @@ impl Partition {
     }
 
     #[inline]
-    pub fn par_iter(&self) -> rayon::slice::Iter<BaseElement> {
+    pub fn par_iter(&self) -> rayon::slice::Iter<BaseDataType> {
         self.raw_partition.par_iter()
     }
 
@@ -53,7 +56,7 @@ impl Partition {
             })
             .chain(rayon::iter::once({
                 let mut new_raw_partition =
-                    Vec::<BaseElement>::with_capacity(raw_partition.len() + 1);
+                    Vec::<BaseDataType>::with_capacity(raw_partition.len() + 1);
 
                 new_raw_partition.clone_from(raw_partition);
 
@@ -67,7 +70,7 @@ impl Partition {
             .collect::<Vec<Partition>>()
     }
 
-    /// Print a partition in a human-friendly form (using an alphabet).
+    /// Print a partition in a human-friendly form (using a list of symbols).
     pub fn print(&self, alphabet: &str) {
         assert_eq!(
             self.partition_size,
@@ -87,7 +90,7 @@ impl Partition {
 
                 print!("(");
 
-                let mut mask = 1 as BaseElement;
+                let mut mask = 1 as BaseDataType;
 
                 for c in alphabet.chars() {
                     // Если соответствующий по номеру бит установлен, то печатаем символ
@@ -105,9 +108,9 @@ impl Partition {
     }
 }
 
-/// Generates all possible partitions of an n-element set.
+/// Generates all possible partitions of a finite set.
 pub fn new_partitions_set(set_size: usize) -> Vec<Partition> {
-    assert!(set_size > 0 && set_size <= BaseElement::BITS as usize);
+    assert!(set_size > 0 && set_size <= BaseDataType::BITS as usize);
 
     (1..set_size).fold(vec![Partition::new(&[1], 1)], |previous_generation, _| {
         previous_generation
@@ -159,7 +162,7 @@ impl PartialOrd for Partition {
 
 #[cfg(test)]
 mod test {
-    use crate::partition::{self, Partition};
+    use super::Partition;
 
     /// Первые 16 чисел Бэлла (число всевозможных разбиений конечного множества)
     const BELL_NUMBERS: [u32; 16] = [
@@ -171,7 +174,7 @@ mod test {
     fn generate_partitions() {
         for n in 1..12 {
             assert_eq!(
-                partition::new_partitions_set(n).len() as u32,
+                super::new_partitions_set(n).len() as u32,
                 BELL_NUMBERS[n as usize]
             );
         }
