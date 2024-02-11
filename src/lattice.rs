@@ -288,14 +288,14 @@ where
 #[cfg(test)]
 mod test {
     use super::Lattice;
-    use crate::partition::{self, Partition};
+    use crate::partition::raw_partition::{self, RawPartition};
 
     #[test]
     fn lattice_from_partitions() {
         for n in 2..=6usize {
             print!("\t{}...", n);
 
-            let lattice: Lattice = partition::new_partitions_set(n).as_slice().into();
+            let lattice: Lattice = raw_partition::new_partitions_set(n).as_slice().into();
 
             assert_eq!(lattice.is_lattice(), true);
 
@@ -326,11 +326,11 @@ mod test {
         //             \ /
         //              Δ
 
-        let abe_cd = Partition::new(&[0b10011, 0b01100], partition_size);
-        let ab_cde = Partition::new(&[0b00011, 0b11100], partition_size);
-        let ab = Partition::new(&[0b00011], partition_size);
-        let cd = Partition::new(&[0b01100], partition_size);
-        let delta = Partition::new(&[0], partition_size);
+        let abe_cd = RawPartition::new(&[0b10011, 0b01100], partition_size);
+        let ab_cde = RawPartition::new(&[0b00011, 0b11100], partition_size);
+        let ab = RawPartition::new(&[0b00011], partition_size);
+        let cd = RawPartition::new(&[0b01100], partition_size);
+        let delta = RawPartition::new(&[0], partition_size);
 
         let partitions_set = [abe_cd, ab_cde, ab, cd, delta];
 
@@ -359,11 +359,11 @@ mod test {
         //       |/           \ |
         //     (ab)           (cd)
 
-        let nabla = Partition::new(&[0b11111], partition_size);
-        let abe_cd = Partition::new(&[0b10011, 0b01100], partition_size);
-        let ab_cde = Partition::new(&[0b00011, 0b11100], partition_size);
-        let ab = Partition::new(&[0b00011], partition_size);
-        let cd = Partition::new(&[0b01100], partition_size);
+        let nabla = RawPartition::new(&[0b11111], partition_size);
+        let abe_cd = RawPartition::new(&[0b10011, 0b01100], partition_size);
+        let ab_cde = RawPartition::new(&[0b00011, 0b11100], partition_size);
+        let ab = RawPartition::new(&[0b00011], partition_size);
+        let cd = RawPartition::new(&[0b01100], partition_size);
 
         let partitions_set = [nabla, abe_cd, ab_cde, ab, cd];
 
@@ -372,7 +372,7 @@ mod test {
 
     #[test]
     fn is_distributive() {
-        let lattice: Lattice = partition::new_partitions_set(3).as_slice().into();
+        let lattice: Lattice = raw_partition::new_partitions_set(3).as_slice().into();
 
         assert_eq!(lattice.is_lattice(), true);
         assert_eq!(lattice.is_distributive(), false);
@@ -380,7 +380,7 @@ mod test {
 
     #[test]
     fn is_modular() {
-        let lattice: Lattice = partition::new_partitions_set(3).as_slice().into();
+        let lattice: Lattice = raw_partition::new_partitions_set(3).as_slice().into();
 
         assert!(lattice.is_lattice());
         assert!(lattice.is_modular());
@@ -388,7 +388,7 @@ mod test {
 
     #[test]
     fn is_not_distributive() {
-        let lattice: Lattice = partition::new_partitions_set(4).as_slice().into();
+        let lattice: Lattice = raw_partition::new_partitions_set(4).as_slice().into();
 
         assert!(lattice.is_lattice());
         assert!(!lattice.is_distributive());
@@ -396,7 +396,7 @@ mod test {
 
     #[test]
     fn is_not_modular() {
-        let lattice: Lattice = partition::new_partitions_set(4).as_slice().into();
+        let lattice: Lattice = raw_partition::new_partitions_set(4).as_slice().into();
 
         assert!(lattice.is_lattice());
         assert!(!lattice.is_modular());

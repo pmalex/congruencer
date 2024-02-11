@@ -1,14 +1,12 @@
 //! Примеры, приведённые здесь взяты из этой статьи: https://www.mathnet.ru/links/72a0f5ea28e6085fc3d2cfe72ca523a6/dvmg303.pdf,
 //! будем обозначать её далее как [1].
 
-use congruencer::{
-    act::raw_act::RawAct, congruence::Congruence, lattice::Lattice, partition::Partition,
-};
+use congruencer::{act::raw_act::RawAct, lattice::Lattice, partition::raw_partition::RawPartition};
 
 mod acts_over_left_zero_semigroup {
     //! Модуль, содержащий таблицы простейших полигонов над полугруппой левых нулей.
 
-    use congruencer::partition::BaseDataType;
+    use congruencer::partition::raw_partition::BaseDataType;
 
     #[rustfmt::skip]
     /// Имя переменной - сокращение от: 'Partition Nabla'.
@@ -54,23 +52,23 @@ fn is_slices_equal<T: PartialEq>(slice_1: &[T], slice_2: &[T]) -> bool {
 fn lattice_of_congruences_1() {
     use acts_over_left_zero_semigroup::*;
 
-    let act = RawAct::new(acts_over_left_zero_semigroup::ACT_1.to_vec(), 4);
+    let raw_act = RawAct::new(acts_over_left_zero_semigroup::ACT_1.to_vec(), 4);
 
-    let act_size = act.size();
+    let raw_act_size = raw_act.size();
 
-    let congruence_set = act.new_congruence_set();
+    let congruence_set = raw_act.new_congruence_set();
 
     let control_set = [
-        Partition::new(&P_NABLA, act_size), // ∇
-        Partition::new(&P_A12, act_size),   // (a12)
-        Partition::new(&P_A13, act_size),   // (a13)
-        Partition::new(&P_A1_23, act_size), // (a1)(23)
-        Partition::new(&P_A1, act_size),    // (a1)
-        Partition::new(&P_123, act_size),   // (123)
-        Partition::new(&P_12, act_size),    // (12)
-        Partition::new(&P_13, act_size),    // (13)
-        Partition::new(&P_23, act_size),    // (23)
-        Partition::new(&P_DELTA, act_size), // Δ
+        RawPartition::new(&P_NABLA, raw_act_size), // ∇
+        RawPartition::new(&P_A12, raw_act_size),   // (a12)
+        RawPartition::new(&P_A13, raw_act_size),   // (a13)
+        RawPartition::new(&P_A1_23, raw_act_size), // (a1)(23)
+        RawPartition::new(&P_A1, raw_act_size),    // (a1)
+        RawPartition::new(&P_123, raw_act_size),   // (123)
+        RawPartition::new(&P_12, raw_act_size),    // (12)
+        RawPartition::new(&P_13, raw_act_size),    // (13)
+        RawPartition::new(&P_23, raw_act_size),    // (23)
+        RawPartition::new(&P_DELTA, raw_act_size), // Δ
     ];
 
     assert!(is_slices_equal(&control_set, &congruence_set));
@@ -86,20 +84,20 @@ fn lattice_of_congruences_1() {
 fn lattice_of_congruences_2() {
     use acts_over_left_zero_semigroup::*;
 
-    let act = RawAct::new(acts_over_left_zero_semigroup::ACT_2.to_vec(), 4);
+    let raw_act = RawAct::new(acts_over_left_zero_semigroup::ACT_2.to_vec(), 4);
 
-    let act_size = act.size();
+    let raw_act_size = raw_act.size();
 
-    let congruence_set = act.new_congruence_set();
+    let congruence_set = raw_act.new_congruence_set();
 
     let control_set = [
-        Partition::new(&P_NABLA, act_size), // ∇
-        Partition::new(&P_A12, act_size),   // (a12)
-        Partition::new(&P_123, act_size),   // (123)
-        Partition::new(&P_12, act_size),    // (12)
-        Partition::new(&P_13, act_size),    // (13)
-        Partition::new(&P_23, act_size),    // (23)
-        Partition::new(&P_DELTA, act_size), // Δ
+        RawPartition::new(&P_NABLA, raw_act_size), // ∇
+        RawPartition::new(&P_A12, raw_act_size),   // (a12)
+        RawPartition::new(&P_123, raw_act_size),   // (123)
+        RawPartition::new(&P_12, raw_act_size),    // (12)
+        RawPartition::new(&P_13, raw_act_size),    // (13)
+        RawPartition::new(&P_23, raw_act_size),    // (23)
+        RawPartition::new(&P_DELTA, raw_act_size), // Δ
     ];
 
     assert!(is_slices_equal(&control_set, &congruence_set));

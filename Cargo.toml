@@ -7,12 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dev-dependencies]
-criterion = "0.5.1"
 itertools = "0.12.1"
 
 [dependencies]
 rayon = "1.5.3"
-
-[[bench]]
-name = "bench_1"
-harness = false

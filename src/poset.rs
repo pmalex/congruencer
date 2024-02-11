@@ -1,18 +1,17 @@
-// TODO: Under construction.
-
 use std::cmp::Ordering;
 
 use crate::ElementIndex;
 
 /// Partially ordered set.
 pub struct Poset {
+    /// Таблица, содержащая отношение между каждым элементом.
     table: Vec<Option<Ordering>>,
     set_size: usize,
 }
 
 impl Poset {
     #[inline(always)]
-    /// Returns relation between two elements.
+    /// Returns the relation between two elements.
     pub fn cmp(&self, a: ElementIndex, b: ElementIndex) -> Option<Ordering> {
         debug_assert!(a < self.set_size && b < self.set_size);
 
@@ -75,17 +74,20 @@ where
 
         let set_size = elements_set.len();
 
+        // Выделяем память
         let mut table = Vec::<Option<Ordering>>::with_capacity(set_size * set_size);
 
+        // Заполняем табличку
         for (i, a) in elements_set.iter().enumerate() {
             for (j, b) in elements_set.iter().enumerate() {
                 table[i * set_size + j] = a.partial_cmp(b);
             }
         }
 
+        // Формируем структуру
         let poset = Self { table, set_size };
 
-        // TODO: перенести это повыше
+        // Проверяем, что удовлетворяются базовые тождества
         assert!(poset.is_reflexive());
         assert!(poset.is_symmetric());
         assert!(poset.is_transitive());
@@ -94,7 +96,7 @@ where
     }
 }
 
-/// Returns a vector of the nearest (maximal) incomparable lower bounds for some element.
+/// Returns a vector of the nearest incomparable lower bounds for some element.
 pub fn nearest_incomparable_lower_bounds<'a, P: PartialOrd>(
     poset: &'a [P],
     element: &'a P,
@@ -154,7 +156,7 @@ pub fn nearest_incomparable_lower_bounds<'a, P: PartialOrd>(
     result
 }
 
-/// Returns a vector of the nearest (minimal) incomparable upper bounds for some element.
+/// Returns a vector of the nearest incomparable upper bounds for some element.
 pub fn nearest_incomparable_upper_bounds<'a, P: PartialOrd>(
     poset: &'a [P],
     element: &'a P,

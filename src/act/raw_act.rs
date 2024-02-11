@@ -1,8 +1,7 @@
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    congruence::Congruence,
-    partition::{self, Partition},
+    partition::raw_partition::{self, RawPartition},
     ElementIndex,
 };
 
@@ -64,38 +63,51 @@ impl RawAct {
 
         result
     }
-}
 
-impl Congruence for RawAct {
-    fn is_congruence(&self, partition: &Partition) -> bool {
+    /// Возвращает число элементов полигона.
+    #[inline(always)]
+    pub fn size(&self) -> usize {
+        self.cayley_table.len() / self.columns
+    }
+
+    /// Возвращает true, если данное разбиение является конгруэнцией.
+    pub fn is_congruence(&self, raw_partition: &RawPartition) -> bool {
         let act = self;
         let semigroup_size = self.columns;
 
-        partition.par_iter().all(|&class| {
+        raw_partition.to_iter().all(|&class| {
             debug_assert!(class > 0);
 
             (0..semigroup_size).into_par_iter().all(|s| {
-                let new_class = act.m(class as ElementIndex, s) as partition::BaseDataType;
+                let new_class = act.m(class as ElementIndex, s) as raw_partition::BaseDataType;
 
                 debug_assert!(new_class > 0);
 
-                partition
-                    .par_iter()
+                raw_partition
+                    .to_iter()
                     .any(|&base_class| (new_class | base_class) == base_class)
             })
         })
     }
 
-    #[inline(always)]
-    fn size(&self) -> usize {
-        self.cayley_table.len() / self.columns
+    #[inline]
+    /// Создание решётки конгруэнций из всевозможных разбиений конечного множества элементов полигона.
+    /// Простейшая (наивная) имплементация.
+    pub fn new_congruence_set(&self) -> Vec<RawPartition>
+    where
+        Self: Sync,
+    {
+        raw_partition::new_partitions_set(self.size())
+            .into_par_iter()
+            .filter(|partition| self.is_congruence(partition))
+            .collect()
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::RawAct;
-    use crate::{congruence::Congruence, partition::Partition};
+    use crate::partition::raw_partition::RawPartition;
 
     #[test]
     fn act_multiplication() {
@@ -128,7 +140,7 @@ mod test {
 
         let act = RawAct::new(cayley_table.to_vec(), 4);
 
-        let partition = Partition::new(&[0b1010, 0b0101], 4);
+        let partition = RawPartition::new(&[0b1010, 0b0101], 4);
 
         assert_eq!(act.is_congruence(&partition), false);
     }
@@ -145,7 +157,7 @@ mod test {
 
         let act = RawAct::new(cayley_table.to_vec(), 4);
 
-        let partition = Partition::new(&[0b1010, 0b0101], 4);
+        let partition = RawPartition::new(&[0b1010, 0b0101], 4);
 
         assert_eq!(act.is_congruence(&partition), true);
     }

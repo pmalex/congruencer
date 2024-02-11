@@ -16,49 +16,48 @@ const UNAR_4: [&str; 12] = [
 
 #[rustfmt::skip]
 /// Унар из пяти элементов.
-const UNAR_5: [[usize; 4]; 5] = [
+const UNAR_5: [&str; 20] = [
     //        a   a^2  a^3  a^4
-    /* x */ [ 1,   2,   3,   4 ],
-    /* y */ [ 2,   3,   4,   4 ],
-    /* z */ [ 3,   4,   4,   4 ],
-    /* u */ [ 4,   4,   4,   4 ],
-    /* v */ [ 4,   4,   4,   4 ],
+    /* x */  "y", "z", "u", "v",
+    /* y */  "z", "u", "v", "v",
+    /* z */  "u", "v", "v", "v",
+    /* u */  "v", "v", "v", "v",
+    /* v */  "v", "v", "v", "v",
 ];
 
 #[rustfmt::skip]
 /// Унар из шести элементов.
-const UNAR_6: [[usize; 5]; 6] = [
+const UNAR_6: [&str; 30] = [
     //        a   a^2  a^3  a^4  a^5
-    /* x */ [ 1,   2,   3,   4,   5 ],
-    /* y */ [ 2,   3,   4,   5,   5 ],
-    /* z */ [ 3,   4,   5,   5,   5 ],
-    /* u */ [ 4,   5,   5,   5,   5 ],
-    /* v */ [ 5,   5,   5,   5,   5 ],
-    /* w */ [ 5,   5,   5,   5,   5 ],
+    /* x */  "y", "z", "u", "v", "w",
+    /* y */  "z", "u", "v", "w", "w",
+    /* z */  "u", "v", "w", "w", "w",
+    /* u */  "v", "w", "w", "w", "w",
+    /* v */  "w", "w", "w", "w", "w",
+    /* w */  "w", "w", "w", "w", "w",
 ];
 
-// fn print_unar_congruences(act_elements: &[&str], unar_table: &[&str]) {
-//     let unar = Act::new(act_elements, unar_table);
+fn print_unar_congruences(act_elements: &[&str], unar_table: &[&str]) {
+    let unar = Act::new(act_elements, unar_table);
 
-//     let congruence_set = unar.new_congruence_set();
+    let congruence_set = unar.new_congruence_set(act_elements);
 
-//     print!("{{");
+    print!("{{");
 
-//     for partition in congruence_set {
-//         partition.print(act_elements);
-//         print!("; ")
-//     }
+    for partition in congruence_set {
+        print!("{}, ", partition);
+    }
 
-//     println!("}}");
-// }
+    println!("}}");
+}
 
 fn main() {
     print!("Конгруэнции унара из четырёх элементов: ");
-    // print_unar_congruences(UNAR_4, "xyzu");
+    print_unar_congruences(&["x", "y", "z", "u"], &UNAR_4);
 
-    // print!("Конгруэнции унара из пяти элементов: ");
-    // print_unar_congruences(UNAR_5, "xyzuv");
+    print!("Конгруэнции унара из пяти элементов: ");
+    print_unar_congruences(&["x", "y", "z", "u", "v"], &UNAR_5);
 
-    // print!("Конгруэнции унара из шести элементов: ");
-    // print_unar_congruences(UNAR_6, "xyzuvw");
+    print!("Конгруэнции унара из шести элементов: ");
+    print_unar_congruences(&["x", "y", "z", "u", "v", "w"], &UNAR_6);
 }

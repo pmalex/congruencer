@@ -6,7 +6,7 @@ use congruencer::{
 };
 
 /// Print a partitions set in the Graphiz Dot format.
-fn partitions_set_print_dot(partitions_set: &[Partition], alphabet: &str) {
+fn partitions_set_print_dot(partitions_set: &[Partition]) {
     println!("graph lattice {{");
     println!("\trankdir = TB;");
     println!("\tratio = 0.75;");
@@ -17,11 +17,7 @@ fn partitions_set_print_dot(partitions_set: &[Partition], alphabet: &str) {
         for nearest_upper_bound in
             poset::nearest_incomparable_lower_bounds(partitions_set, partition)
         {
-            print!("\t\"");
-            partition.print(alphabet);
-            print!("\" -- \"");
-            nearest_upper_bound.print(alphabet);
-            println!("\"");
+            println!("\t\"{}\" -- \"{}\"", partition, nearest_upper_bound)
         }
     }
 
@@ -29,5 +25,5 @@ fn partitions_set_print_dot(partitions_set: &[Partition], alphabet: &str) {
 }
 
 fn main() {
-    partitions_set_print_dot(&partition::new_partitions_set(5), "abcde");
+    partitions_set_print_dot(&partition::new_partitions_set(&["a", "b", "c", "d", "e"]));
 }

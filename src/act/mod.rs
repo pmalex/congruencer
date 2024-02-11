@@ -1,4 +1,4 @@
-use crate::congruence::Congruence;
+use crate::{congruence::Congruence, partition::Partition};
 
 pub mod raw_act;
 
@@ -7,7 +7,7 @@ pub struct Act<'a> {
     raw_act: raw_act::RawAct,
 
     /// Имена элеменов полигона в текстовом (понятном человеку) виде.
-    act_elements_names: &'a [&'a str],
+    _act_elements_names: &'a [&'a str],
 }
 
 impl<'a> Act<'a> {
@@ -15,9 +15,10 @@ impl<'a> Act<'a> {
         // Удостоверяемся, что `act_elements` содержит только уникальные элементы.
         {
             let mut act_elements_names_vec = act_elements_names.to_vec();
-            act_elements_names_vec.sort();
+            act_elements_names_vec.sort(); // Сортировка поставит одинаковые элементы рядом друг с другом
             act_elements_names_vec.dedup(); // Удаляем стоящие рядом одинаковые элементы
 
+            // Если длины списков разные, то значит исходный список содержит повторяющиеся элементы.
             assert_eq!(
                 act_elements_names.len(),
                 act_elements_names_vec.len(),
@@ -42,20 +43,15 @@ impl<'a> Act<'a> {
 
         Self {
             raw_act: raw_act::RawAct::new(new_cayley_table, act_elements_names.len()),
-            act_elements_names,
+            _act_elements_names: act_elements_names,
         }
     }
 }
 
 impl<'a> Congruence for Act<'a> {
     #[inline(always)]
-    fn is_congruence(&self, partition: &crate::partition::Partition) -> bool {
-        self.raw_act.is_congruence(partition)
-    }
-
-    #[inline(always)]
-    fn size(&self) -> usize {
-        self.raw_act.size()
+    fn is_congruence(&self, partition: &Partition) -> bool {
+        self.raw_act.is_congruence(&partition.raw_partition)
     }
 }
 
