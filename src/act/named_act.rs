@@ -33,7 +33,7 @@ impl NamedAct {
         // Удостоверяемся, что `act_elements` содержит только уникальные элементы.
         {
             let mut act_elements_names_vec = elements_names.to_vec();
-            act_elements_names_vec.sort(); // Сортировка поставит одинаковые элементы рядом друг с другом
+            act_elements_names_vec.sort_unstable(); // Сортировка поставит одинаковые элементы рядом друг с другом
             act_elements_names_vec.dedup(); // Удаляем стоящие рядом одинаковые элементы
 
             // Если длины списков разные, то значит исходный список содержит повторяющиеся элементы.

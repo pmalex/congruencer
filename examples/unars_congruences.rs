@@ -5,7 +5,9 @@
 use congruencer::act::named_act::NamedAct;
 
 #[rustfmt::skip]
-/// Унар из четырёх элементов.
+/// Унар из четырёх элементов:
+/// 
+/// x → y → z → u ↺
 const UNAR_4: [&str; 12] = [
     //       a   a^2  a^3
     /* x */ "y", "z", "u",
@@ -15,7 +17,9 @@ const UNAR_4: [&str; 12] = [
 ];
 
 #[rustfmt::skip]
-/// Унар из пяти элементов.
+/// Унар из пяти элементов:
+/// 
+/// x → y → z → u → v ↺
 const UNAR_5: [&str; 20] = [
     //        a   a^2  a^3  a^4
     /* x */  "y", "z", "u", "v",
@@ -26,7 +30,9 @@ const UNAR_5: [&str; 20] = [
 ];
 
 #[rustfmt::skip]
-/// Унар из шести элементов.
+/// Унар из шести элементов:
+/// 
+/// x → y → z → u → v → w ↺
 const UNAR_6: [&str; 30] = [
     //        a   a^2  a^3  a^4  a^5
     /* x */  "y", "z", "u", "v", "w",
@@ -37,7 +43,9 @@ const UNAR_6: [&str; 30] = [
     /* w */  "w", "w", "w", "w", "w",
 ];
 
-/// Функция, порождающая унар-полуцепь из n элементов.
+/// Функция, порождающая унар-полуцепь из n элементов:
+/// 
+/// x_1 → x_2 → x_3 → ... → x_n ↺
 fn get_unar_semichain(n: usize) -> NamedAct {
     assert!(n > 0);
 
@@ -66,7 +74,7 @@ fn get_unar_semichain(n: usize) -> NamedAct {
     NamedAct::from_string_table(unar_elements_names, &unar_table_ref)
 }
 
-/// Печатает решётку конгруэнций переданного унара.
+/// Печатает множество конгруэнций унара.
 fn print_unar_congruences(unar: NamedAct) {
     let unar_congruence_set = unar.new_congruence_set();
 

@@ -80,6 +80,8 @@ impl Lattice {
             })
     }
 
+    /// Возвращает `true`, если решётка удовлетворяет тождеству модулярности:
+    /// `x ∧ (y ∨ z) = x ∧ ((y ∧ (x ∨ z)) ∨ z)`.
     pub fn is_modular(&self) -> bool {
         let Self { sup, inf } = self;
 
@@ -129,6 +131,7 @@ impl<P> From<&[P]> for Lattice
 where
     P: PartialOrd + Sync + Clone,
 {
+    /// Конструирует решётку из частично упорядоченного множества.
     fn from(poset: &[P]) -> Self {
         let number_of_elements = poset.len();
 
@@ -305,7 +308,7 @@ mod test {
 
     #[test]
     #[should_panic]
-    /// A try to build a lattice from a poset (not a lattice).
+    /// Trying to build a lattice from a poset (not a lattice).
     fn lattice_from_poset_1() {
         let partition_size = 5;
 
@@ -339,7 +342,7 @@ mod test {
 
     #[test]
     #[should_panic]
-    /// A try to build a lattice from a poset (not a lattice).
+    /// Trying to build a lattice from a poset (not a lattice).
     fn lattice_from_poset_2() {
         let partition_size = 5;
 
