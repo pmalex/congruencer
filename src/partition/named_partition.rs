@@ -24,7 +24,7 @@ pub fn new_partitions_set(elements_names: &[String]) -> Vec<NamedPartition> {
     // Удостоверяемся, что `act_elements` содержит только уникальные элементы.
     {
         let mut set_elements_names_vec = elements_names.to_vec();
-        set_elements_names_vec.sort(); // Сортировка поставит одинаковые элементы рядом друг с другом
+        set_elements_names_vec.sort_unstable(); // Сортировка поставит одинаковые элементы рядом друг с другом
         set_elements_names_vec.dedup(); // Удаляем стоящие рядом одинаковые элементы
 
         // Если длины списков разные, то значит исходный список содержит повторяющиеся элементы.
