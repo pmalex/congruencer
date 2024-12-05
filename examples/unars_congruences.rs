@@ -2,7 +2,7 @@
 //!
 //! В данном примере строится решётка конгруэнций простейших унаров - полуцепей.
 
-use congruencer::act::named_act::NamedAct;
+use congruencer::act::Act;
 
 #[rustfmt::skip]
 /// Унар из четырёх элементов:
@@ -44,9 +44,9 @@ const UNAR_6: [&str; 30] = [
 ];
 
 /// Функция, порождающая унар-полуцепь из n элементов:
-/// 
+///
 /// x_1 → x_2 → x_3 → ... → x_n ↺
-fn get_unar_semichain(n: usize) -> NamedAct {
+fn get_unar_semichain(n: usize) -> Act {
     assert!(n > 0);
 
     // Формируем алфавит
@@ -71,11 +71,11 @@ fn get_unar_semichain(n: usize) -> NamedAct {
     // Преобразовываем String -> &str
     let unar_table_ref = unar_table.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
 
-    NamedAct::from_string_table(unar_elements_names, &unar_table_ref)
+    Act::from_string_table(unar_elements_names, &unar_table_ref)
 }
 
 /// Печатает множество конгруэнций унара.
-fn print_unar_congruences(unar: NamedAct) {
+fn print_unar_congruences(unar: Act) {
     let unar_congruence_set = unar.new_congruence_set();
 
     print!("{{");
@@ -98,19 +98,19 @@ fn main() {
     ];
 
     print!("Конгруэнции унара из четырёх элементов: ");
-    print_unar_congruences(NamedAct::from_string_table(
+    print_unar_congruences(Act::from_string_table(
         unar_elements[0..4].to_vec(),
         &UNAR_4,
     ));
 
     print!("Конгруэнции унара из пяти элементов: ");
-    print_unar_congruences(NamedAct::from_string_table(
+    print_unar_congruences(Act::from_string_table(
         unar_elements[0..5].to_vec(),
         &UNAR_5,
     ));
 
     print!("Конгруэнции унара из шести элементов: ");
-    print_unar_congruences(NamedAct::from_string_table(
+    print_unar_congruences(Act::from_string_table(
         unar_elements[0..6].to_vec(),
         &UNAR_6,
     ));

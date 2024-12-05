@@ -3,74 +3,52 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use crate::{
     congruence::Congruence,
     partition::{self, Partition},
-    ElementIndex,
 };
+use raw_act::RawAct;
 
-pub mod named_act;
+pub mod raw_act;
 
-/// Полигон над полугруппой.
 pub struct Act {
-    pub(crate) cayley_table: Vec<ElementIndex>,
+    raw_act: RawAct,
 
-    /// Число столбцов в таблице Кэли, или, что то же самое - число элементов
-    /// полугруппы, над которой определён полигон.
-    pub(crate) columns: usize,
+    /// Имена элеменов множества в текстовом (понятном человеку) виде.
+    elements_names: Vec<String>,
 }
 
 impl Act {
-    /// Создание структуры полигона из его таблицы умножения (таблицы Кэли).
-    /// Её строки обозначают элементы полигона, столбцы - элементы полугруппы.
-    pub fn new(cayley_table: Vec<ElementIndex>, act_size: usize) -> Self {
-        assert!(
-            !cayley_table.is_empty() && cayley_table.len() % act_size == 0,
-            "Из данного массива невозможно сделать таблицу с указанным числом элементов полигона."
-        );
+    /// Создаёт полигон из списка элементов и таблицы, в которых элементы заданы строками, то есть удобными
+    /// для чтения человеком.
+    pub fn from_string_table(elements_names: Vec<String>, cayley_table: &[&str]) -> Self {
+        // Удостоверяемся, что `act_elements` содержит только уникальные элементы.
+        {
+            let mut act_elements_names_vec = elements_names.to_vec();
+            act_elements_names_vec.sort_unstable(); // Сортировка поставит одинаковые элементы рядом друг с другом
+            act_elements_names_vec.dedup(); // Удаляем стоящие рядом одинаковые элементы
 
-        // То же самое, что число элементов полугруппы.
-        let columns = cayley_table.len() / act_size;
+            // Если длины списков разные, то значит исходный список содержит повторяющиеся элементы.
+            assert_eq!(
+                elements_names.len(),
+                act_elements_names_vec.len(),
+                "Список элементов полигона содержит повторяющиеся!"
+            )
+        }
 
-        assert!(columns > 0 && columns <= cayley_table.len());
+        // Формируем таблицу Кэли, состоящую из чисел, а не из строк,
+        // то есть нам нужно заменить строчки на их уникальные коды.
+        let new_cayley_table = cayley_table
+            .iter()
+            .map(|&s| {
+                elements_names
+                    .iter()
+                    .position(|t| *t == *s)
+                    .unwrap_or_else(|| panic!("В таблице присутствует символ `{}`, не указанный в списке элементов полигона",s))
+            })
+            .collect::<Vec<usize>>();
 
         Self {
-            cayley_table,
-            columns,
+            raw_act: RawAct::new(new_cayley_table, elements_names.len()),
+            elements_names,
         }
-    }
-
-    /// Multiply a set of an act's elements by a semigroup element `s`.
-    pub fn m(&self, mut class: ElementIndex, s: usize) -> ElementIndex {
-        // Check that the number (class) and the table are compatible.
-        debug_assert!(
-            ((ElementIndex::BITS - class.leading_zeros() - 1) as usize) // Position of the most significant unity.
-            <
-            self.cayley_table.len() / self.columns, // Number of rows.
-            "The class({:b}) is too big, the table does not contains enough values",
-            class
-        );
-
-        debug_assert!(s < self.columns);
-
-        let mut result = 0;
-
-        for i in 0..ElementIndex::BITS as usize {
-            if class == 0 {
-                break;
-            }
-
-            if class & 0b1 == 0b1 {
-                result |= 1 << self.cayley_table[i * self.columns + s];
-            }
-
-            class >>= 1;
-        }
-
-        result
-    }
-
-    #[inline]
-    /// Возвращает число элементов полингона.
-    pub fn size(&self) -> usize {
-        self.cayley_table.len() / self.columns
     }
 
     /// Создание решётки конгруэнций из всевозможных разбиений элементов полигона.
@@ -78,90 +56,140 @@ impl Act {
     where
         Self: Sync,
     {
-        partition::new_partitions_set(self.size())
+        partition::new_partitions_set(&self.elements_names)
             .into_par_iter()
             .filter(|partition| self.is_congruence(partition))
             .collect()
     }
 }
 
-impl Congruence<Partition> for Act {
-    /// Возвращает true, если данное разбиение является конгруэнцией.
-    fn is_congruence<'a>(&self, partition: &Partition) -> bool {
-        let act = self;
-        let semigroup_size = self.columns;
+impl<'a> Congruence<Partition<'a>> for Act {
+    #[inline(always)]
+    fn is_congruence(&self, named_partition: &Partition<'a>) -> bool {
+        self.raw_act.is_congruence(&named_partition.raw_partition)
+    }
+}
 
-        partition.to_iter().all(|&class| {
-            debug_assert!(class > 0);
+impl std::fmt::Display for Act {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let act = &self.raw_act;
 
-            (0..semigroup_size).into_par_iter().all(|s| {
-                let new_class = act.m(class as ElementIndex, s) as partition::BaseDataType;
+        let rows = act.cayley_table.len() / act.columns;
 
-                debug_assert!(new_class > 0);
+        // Определяем строчку с максимальной длиной (для выравнивания печати)
+        let max_len = self
+            .elements_names
+            .iter()
+            .max_by(|&x, &y| x.len().cmp(&y.len()))
+            .unwrap()
+            .len();
 
-                partition
-                    .to_iter()
-                    .any(|&base_class| (new_class | base_class) == base_class)
-            })
-        })
+        for i in 0..rows {
+            // Сначала печатаем название элемента
+            write!(f, "{: >width$} | ", self.elements_names[i], width = max_len)?;
+
+            // Теперь печатаем оставшуюся строчку
+            for j in 0..act.columns {
+                write!(
+                    f,
+                    "{: >width$} ",
+                    self.elements_names[act.cayley_table[i * act.columns + j]],
+                    width = max_len
+                )?;
+            }
+
+            writeln!(f)?;
+        }
+
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::Act;
-    use crate::{congruence::Congruence, partition::Partition};
 
+    /// Проверяем, что полигон, заданный буквами формируется правильно.
     #[test]
-    fn act_multiplication() {
+    fn characters_assignment_test() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 0, 3, 2, 2,
-            /* 1 */ 3, 1, 1, 0, 2,
-            /* 2 */ 2, 3, 3, 1, 2,
-            /* 3 */ 3, 3, 2, 3, 2,
+            //       a   a^2  a^3
+            /* x */ "y", "z", "u",
+            /* y */ "z", "u", "u",
+            /* z */ "u", "u", "u",
+            /* u */ "u", "u", "u",
         ];
 
-        let act = Act::new(cayley_table.to_vec(), 4);
+        let named_act = Act::from_string_table(
+            vec![
+                "x".to_string(),
+                "y".to_string(),
+                "z".to_string(),
+                "u".to_string(),
+            ],
+            &cayley_table,
+        );
 
-        assert_eq!(act.m(0b01010, 0), 0b01000);
-        assert_eq!(act.m(0b01010, 1), 0b01010);
-        assert_eq!(act.m(0b01010, 2), 0b00110);
-        assert_eq!(act.m(0b01010, 3), 0b01001);
-        assert_eq!(act.m(0b01101, 4), 0b00100);
+        #[rustfmt::skip]
+        assert_eq!(
+            named_act.raw_act.cayley_table,
+            [
+                1, 2, 3,
+                2, 3, 3,
+                3, 3, 3,
+                3, 3, 3
+            ]
+        );
     }
 
+    /// Проверяем, что при создании полигона с повторяющимися элементами невозможно.
     #[test]
-    fn is_congruence_1() {
+    #[should_panic]
+    fn unique_elements_test() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 0, 3, 2, 2,
-            /* 1 */ 3, 1, 1, 0, 2,
-            /* 2 */ 2, 3, 3, 1, 2,
-            /* 3 */ 3, 3, 2, 3, 2,
+            //       a   a^2  a^3
+            /* x */ "y", "z", "u",
+            /* y */ "z", "u", "u",
+            /* z */ "u", "u", "u",
+            /* u */ "u", "u", "u",
         ];
 
-        let act = Act::new(cayley_table.to_vec(), 4);
-
-        let partition = Partition::new(&[0b1010, 0b0101], 4);
-
-        assert_eq!(act.is_congruence(&partition), false);
+        Act::from_string_table(
+            vec![
+                "x".to_string(),
+                "y".to_string(),
+                "u".to_string(),
+                "z".to_string(),
+                "u".to_string(),
+            ],
+            &cayley_table,
+        );
     }
 
+    /// Проверяем, что попытка создать полигон с таблцией Кэли содержащей элемент
+    /// не указанный в списке элементов полигона провалится.
     #[test]
-    fn is_congruence_2() {
+    #[should_panic]
+    fn table_correctness_test() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 3, 2, 2,
-            /* 1 */ 3, 0, 2, 1,
-            /* 2 */ 3, 1, 2, 0,
-            /* 3 */ 3, 2, 0, 3,
+            //       a   a^2  a^3
+            /* x */ "y", "z", "u",
+            /* y */ "z", "u", "u",
+            /* z */ "u", "u", "t",
+            /* u */ "u", "u", "u",
         ];
 
-        let act = Act::new(cayley_table.to_vec(), 4);
-
-        let partition = Partition::new(&[0b1010, 0b0101], 4);
-
-        assert_eq!(act.is_congruence(&partition), true);
+        Act::from_string_table(
+            vec![
+                "x".to_string(),
+                "y".to_string(),
+                "u".to_string(),
+                "z".to_string(),
+            ],
+            &cayley_table,
+        );
     }
 }

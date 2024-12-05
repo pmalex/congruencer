@@ -1,12 +1,12 @@
 //! Пример построения решётки всевозможных разбиений конечного множества и вывода её в формате Graphiz Dot.
 
 use congruencer::{
-    partition::named_partition::{self, NamedPartition},
+    partition::{self, Partition},
     poset,
 };
 
 /// Print a partitions set in the Graphiz Dot format.
-fn partitions_set_print_dot(partitions_set: &[NamedPartition]) {
+fn partitions_set_print_dot(partitions_set: &[Partition]) {
     println!("graph lattice {{");
     println!("\trankdir = TB;");
     println!("\tratio = 0.75;");
@@ -25,7 +25,7 @@ fn partitions_set_print_dot(partitions_set: &[NamedPartition]) {
 }
 
 fn main() {
-    partitions_set_print_dot(&named_partition::new_partitions_set(&[
+    partitions_set_print_dot(&partition::new_partitions_set(&[
         "a".to_string(),
         "b".to_string(),
         "c".to_string(),
