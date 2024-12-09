@@ -9,7 +9,9 @@ use crate::ElementIndex;
 
 pub struct BinaryOperation {
     cayley_table: Vec<ElementIndex>,
-    set_size: usize,
+
+    /// Размер множества, на котором определена бинарная операция.
+    pub set_size: usize,
 }
 
 impl BinaryOperation {
@@ -38,11 +40,6 @@ impl BinaryOperation {
         debug_assert!(b < self.set_size);
 
         self.cayley_table[a * self.set_size + b]
-    }
-
-    #[inline(always)]
-    pub fn get_set_size(&self) -> usize {
-        self.set_size
     }
 
     pub fn is_idempotent(&self) -> bool {
@@ -141,8 +138,8 @@ mod test {
 
     /// Simple (and slow) implementation.
     fn is_commutative_slow(binary_operation: &BinaryOperation) -> bool {
-        (1..binary_operation.get_set_size()).all(|element_a_index| {
-            (1..binary_operation.get_set_size()).all(|element_b_index| {
+        (1..binary_operation.set_size).all(|element_a_index| {
+            (1..binary_operation.set_size).all(|element_b_index| {
                 binary_operation.call(element_a_index, element_b_index)
                     == binary_operation.call(element_b_index, element_a_index)
             })
@@ -152,9 +149,9 @@ mod test {
     /// Simple (and slow) implementation.
     fn is_associative_slow(binary_operation: &BinaryOperation) -> bool {
         iproduct!(
-            (0..binary_operation.get_set_size()),
-            (0..binary_operation.get_set_size()),
-            (0..binary_operation.get_set_size())
+            (0..binary_operation.set_size),
+            (0..binary_operation.set_size),
+            (0..binary_operation.set_size)
         )
         .collect_vec()
         .into_iter()

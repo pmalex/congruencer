@@ -68,7 +68,7 @@ impl Lattice {
     pub fn is_absorbing(&self) -> bool {
         let Self { sup, inf, .. } = self;
 
-        let number_of_elements = sup.get_set_size();
+        let number_of_elements = sup.set_size;
 
         (0..number_of_elements * number_of_elements)
             .into_par_iter()
@@ -81,11 +81,13 @@ impl Lattice {
     }
 
     /// Возвращает `true`, если решётка удовлетворяет тождеству модулярности:
-    /// `x ∧ (y ∨ z) = x ∧ ((y ∧ (x ∨ z)) ∨ z)`.
+    /// ```text
+    /// x ∧ (y ∨ z) = x ∧ ((y ∧ (x ∨ z)) ∨ z).
+    /// ```
     pub fn is_modular(&self) -> bool {
         let Self { sup, inf } = self;
 
-        let number_of_elements = sup.get_set_size();
+        let number_of_elements = sup.set_size;
         let number_of_elements_squared = number_of_elements * number_of_elements;
 
         (0..number_of_elements_squared * number_of_elements)
@@ -103,10 +105,11 @@ impl Lattice {
             })
     }
 
+    /// Возвращает `true`, если решётка удовлетворяет тождеству дистрибутивности.
     pub fn is_distributive(&self) -> bool {
         let Self { sup, inf, .. } = self;
 
-        let number_of_elements = sup.get_set_size();
+        let number_of_elements = sup.set_size;
         let number_of_elements_squared = number_of_elements * number_of_elements;
 
         (0..number_of_elements_squared * number_of_elements)
@@ -203,7 +206,7 @@ where
                                         }
                                     },
                                 )
-                                .expect("The poset is not an upper lattice.")
+                                .expect("The poset is not an upper semilattice.")
                                 }
                     });
 
@@ -276,7 +279,7 @@ where
                                         }
                                     },
                                 )
-                                .expect("The poset is not a lower lattice.")
+                                .expect("The poset is not a lower semilattice.")
                         }
                     });
 

@@ -1,6 +1,7 @@
 use super::BinaryOperation;
 use crate::long_number::{iterator::LongNaturalNumberIterator, LongNaturalNumber};
 
+/// Итератор, перебирающий всевозможные бинарные операции конченого множества.
 pub struct BinaryOperationIterator(LongNaturalNumberIterator);
 
 impl BinaryOperationIterator {
@@ -32,12 +33,12 @@ impl From<LongNaturalNumber> for BinaryOperation {
         let set_size = {
             let sqrt = (digits.len() as f32).sqrt() as usize;
 
-            assert_eq!(sqrt * sqrt, digits.len());
+            debug_assert_eq!(sqrt * sqrt, digits.len());
 
             sqrt
         };
 
-        assert!(radix >= set_size);
+        debug_assert!(radix >= set_size);
 
         Self {
             cayley_table: digits,
