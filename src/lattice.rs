@@ -132,7 +132,7 @@ impl Lattice {
 
 impl<P> From<&[P]> for Lattice
 where
-    P: PartialOrd + Sync + Clone,
+    P: PartialOrd + Sync,
 {
     /// Конструирует решётку из частично упорядоченного множества.
     fn from(poset: &[P]) -> Self {

@@ -2,6 +2,9 @@ use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator, ParallelIter
 use std::cmp::Ordering;
 
 /// Число бит в данном типе определеяет максимальное число элементов в разбиении.
+///
+/// Так как для 32 элементов число всевозможных разбиений огромно, то 32 бита вполне достаточно
+/// для мощностей современных машин.
 pub type BaseDataType = u32;
 
 /// Разбиение конечного множества.
@@ -12,9 +15,24 @@ pub struct RawPartition {
 }
 
 impl RawPartition {
-    #[inline]
     pub fn new(raw_partition: &[BaseDataType], partition_size: usize) -> Self {
         assert!(partition_size > 0 && partition_size <= BaseDataType::BITS as usize);
+
+        // Проверяем, что переданный массив действительно является разбиением.
+        let bits = raw_partition.iter().fold(0 as BaseDataType, |acc, &class| {
+            if acc ^ class != acc | class {
+                panic!("Некоторые классы в переданном массиве пересекаются друг с другом")
+            } else {
+                acc | class
+            }
+        });
+
+        // Проверяем, что общее число бит выставлено верно.
+        assert_eq!(
+            (1 << partition_size) - 1,
+            bits,
+            "Классы не образуют разбиение указанного размера"
+        );
 
         Self {
             data: raw_partition.to_vec(),
@@ -145,7 +163,7 @@ mod test {
     #[test]
     fn partial_ord_le_1() {
         let partition_1 = RawPartition::new(&[0b11010, 0b00101], 5);
-        let partition_2 = RawPartition::new(&[0b11000, 0b00001], 5);
+        let partition_2 = RawPartition::new(&[0b11000, 0b00001, 0b00010, 0b00100], 5);
 
         assert_eq!(partition_2 <= partition_1, true);
     }
@@ -153,7 +171,7 @@ mod test {
     #[test]
     fn partial_ord_le_2() {
         let partition_1 = RawPartition::new(&[0b11010, 0b00101], 5);
-        let partition_2 = RawPartition::new(&[0b11000, 0b00001], 5);
+        let partition_2 = RawPartition::new(&[0b11000, 0b00001, 0b00100, 0b00010], 5);
 
         assert_eq!(partition_1 >= partition_2, true);
     }
@@ -161,15 +179,15 @@ mod test {
     #[test]
     fn partial_ord_le_3() {
         let partition_1 = RawPartition::new(&[0b11010, 0b00101], 5);
-        let partition_2 = RawPartition::new(&[0b01110, 0b00100], 5);
+        let partition_2 = RawPartition::new(&[0b01110, 0b10000, 0b00001], 5);
 
         assert_eq!(partition_2 <= partition_1, false);
     }
 
     #[test]
     fn partial_ord_le_4() {
-        let ab = RawPartition::new(&[0b011], 3);
-        let ac = RawPartition::new(&[0b101], 3);
+        let ab = RawPartition::new(&[0b011, 0b100], 3);
+        let ac = RawPartition::new(&[0b101, 0b010], 3);
 
         assert_eq!(ab <= ac, false);
         assert_eq!(ab >= ac, false);

@@ -3,72 +3,79 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use crate::{
     congruence::Congruence,
     partition::raw_partition::{self, RawPartition},
-    ElementIndex,
 };
 
 /// Полигон над полугруппой.
 pub struct RawAct {
-    pub(crate) cayley_table: Vec<ElementIndex>,
+    pub(crate) cayley_table: Vec<u32>,
 
-    /// Число столбцов в таблице Кэли, или, что то же самое - число элементов
-    /// полугруппы, над которой определён полигон.
-    pub(crate) columns: usize,
+    pub semigroup_size: usize,
+    pub act_size: usize,
 }
 
 impl RawAct {
     /// Создание структуры полигона из его таблицы умножения (таблицы Кэли).
+    ///
     /// Её строки обозначают элементы полигона, столбцы - элементы полугруппы.
-    pub fn new(cayley_table: Vec<ElementIndex>, act_size: usize) -> Self {
+    pub fn new(cayley_table: &[u32], act_size: usize) -> Self {
         assert!(
-            !cayley_table.is_empty() && cayley_table.len() % act_size == 0,
-            "Из данного массива невозможно сделать таблицу с указанным числом элементов полигона."
+            !cayley_table.is_empty(),
+            "Таблица Кэли пуста, нечего создавать"
         );
 
-        // То же самое, что число элементов полугруппы.
-        let columns = cayley_table.len() / act_size;
+        assert!(act_size > 0);
 
-        assert!(columns > 0 && columns <= cayley_table.len());
+        let semigroup_size = cayley_table.len() / act_size;
+
+        assert_eq!(
+            act_size * semigroup_size,
+            cayley_table.len(),
+            "Размер полигона и полугруппы не соответствуют переданной таблице Кэли"
+        );
 
         Self {
-            cayley_table,
-            columns,
+            cayley_table: cayley_table.to_vec(),
+            act_size,
+            semigroup_size,
         }
     }
 
-    /// Multiply a set of an act's elements by a semigroup element `s`.
-    pub fn m(&self, mut class: ElementIndex, s: usize) -> ElementIndex {
-        // Check that the number (class) and the table are compatible.
+    /// Умножает множество элементов полигона на элемент полугруппы, указанный при помощи индекса.
+    pub fn m(&self, elements: u32, s_index: usize) -> u32 {
+        // Проверяем, что переданное множество элементов совместимо с таблицей Кэли полигона.
         debug_assert!(
-            ((ElementIndex::BITS - class.leading_zeros() - 1) as usize) // Position of the most significant unity.
+            ((u32::BITS - elements.leading_zeros() - 1) as usize) // Position of the most significant unity.
             <
-            self.cayley_table.len() / self.columns, // Number of rows.
+            self.act_size,
             "The class({:b}) is too big, the table does not contains enough values",
-            class
+            elements
         );
 
-        debug_assert!(s < self.columns);
+        debug_assert!(s_index < self.semigroup_size);
 
         let mut result = 0;
+        let mut elements = elements;
 
-        for i in 0..ElementIndex::BITS as usize {
-            if class == 0 {
+        for i in 0..u32::BITS as usize {
+            if elements == 0 {
                 break;
             }
 
-            if class & 0b1 == 0b1 {
-                result |= 1 << self.cayley_table[i * self.columns + s];
+            // Если бит выставлен, то элемент представлен в классе
+            if elements & 0b1 == 0b1 {
+                // Индекс i обозначает индекс элемента полигона
+                result |= 1
+                    << unsafe {
+                        self.cayley_table
+                            .get_unchecked(i * self.semigroup_size + s_index)
+                    };
             }
 
-            class >>= 1;
+            // Сдвигаем весь класс на единицу вправо
+            elements >>= 1;
         }
 
         result
-    }
-
-    #[inline]
-    /// Возвращает число элементов полингона.
-    pub fn size(&self) -> usize {
-        self.cayley_table.len() / self.columns
     }
 
     /// Создание решётки конгруэнций из всевозможных разбиений элементов полигона.
@@ -76,7 +83,7 @@ impl RawAct {
     where
         Self: Sync,
     {
-        raw_partition::new_partitions_set(self.size())
+        raw_partition::new_partitions_set(self.act_size)
             .into_par_iter()
             .filter(|partition| self.is_congruence(partition))
             .collect()
@@ -84,19 +91,23 @@ impl RawAct {
 }
 
 impl Congruence<RawPartition> for RawAct {
-    /// Возвращает true, если данное разбиение является конгруэнцией.
+    /// Возвращает true, если переданное разбиение является конгруэнцией.
     fn is_congruence<'a>(&self, partition: &RawPartition) -> bool {
         let act = self;
-        let semigroup_size = self.columns;
+        let semigroup_size = self.semigroup_size;
 
+        // Обходим каждый независимый кусок (класс) разбиения.
         partition.to_iter().all(|&class| {
             debug_assert!(class > 0);
 
-            (0..semigroup_size).into_par_iter().all(|s| {
-                let new_class = act.m(class as ElementIndex, s) as raw_partition::BaseDataType;
+            (0..semigroup_size).into_par_iter().all(|index| {
+                // Умножаем все элементы класса на элемент (индекс элемента) полугруппы.
+                let new_class = act.m(class, index) as raw_partition::BaseDataType;
 
                 debug_assert!(new_class > 0);
 
+                // Смотрим, не вышел ли класс за пределы разбиения
+                // (является ли подмножеством в каком-либо другом классе).
                 partition
                     .to_iter()
                     .any(|&base_class| (new_class | base_class) == base_class)
@@ -114,13 +125,14 @@ mod test {
     fn act_multiplication() {
         #[rustfmt::skip]
         let cayley_table = [
-            /* 0 */ 1, 0, 3, 2, 2,
-            /* 1 */ 3, 1, 1, 0, 2,
-            /* 2 */ 2, 3, 3, 1, 2,
-            /* 3 */ 3, 3, 2, 3, 2,
+            //      s_1  s_2  s_3  s_4  s_5
+            /* 0 */  1,   0,   3,   2,   2,
+            /* 1 */  3,   1,   1,   0,   2,
+            /* 2 */  2,   3,   3,   1,   2,
+            /* 3 */  3,   3,   2,   3,   2,
         ];
 
-        let act = RawAct::new(cayley_table.to_vec(), 4);
+        let act = RawAct::new(&cayley_table, 4);
 
         assert_eq!(act.m(0b01010, 0), 0b01000);
         assert_eq!(act.m(0b01010, 1), 0b01010);
@@ -139,7 +151,7 @@ mod test {
             /* 3 */ 3, 3, 2, 3, 2,
         ];
 
-        let act = RawAct::new(cayley_table.to_vec(), 4);
+        let act = RawAct::new(&cayley_table, 5);
 
         let partition = RawPartition::new(&[0b1010, 0b0101], 4);
 
@@ -156,7 +168,7 @@ mod test {
             /* 3 */ 3, 2, 0, 3,
         ];
 
-        let act = RawAct::new(cayley_table.to_vec(), 4);
+        let act = RawAct::new(&cayley_table, 4);
 
         let partition = RawPartition::new(&[0b1010, 0b0101], 4);
 

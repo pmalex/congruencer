@@ -5,7 +5,7 @@ use congruencer::{
     poset,
 };
 
-/// Print a partitions set in the Graphiz Dot format.
+/// Prints a partitions set in the Graphiz Dot format.
 fn partitions_set_print_dot(partitions_set: &[Partition]) {
     println!("graph lattice {{");
     println!("\trankdir = TB;");

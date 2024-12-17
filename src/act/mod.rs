@@ -18,20 +18,28 @@ pub struct Act {
 impl Act {
     /// Создаёт полигон из списка элементов и таблицы, в которых элементы заданы строками, то есть удобными
     /// для чтения человеком.
-    pub fn from_string_table(elements_names: Vec<String>, cayley_table: &[&str]) -> Self {
+    ///
+    /// ## Внимание
+    /// Число строк интерпретируется как число элементов полигона, а число
+    /// столбцов - как число элементов в полугруппе.
+    pub fn from_str_table(elements_names: &[&str], cayley_table: &[&str]) -> Self {
         // Удостоверяемся, что `act_elements` содержит только уникальные элементы.
         {
             let mut act_elements_names_vec = elements_names.to_vec();
             act_elements_names_vec.sort_unstable(); // Сортировка поставит одинаковые элементы рядом друг с другом
             act_elements_names_vec.dedup(); // Удаляем стоящие рядом одинаковые элементы
 
-            // Если длины списков разные, то значит исходный список содержит повторяющиеся элементы.
             assert_eq!(
                 elements_names.len(),
                 act_elements_names_vec.len(),
-                "Список элементов полигона содержит повторяющиеся!"
+                "Список элементов полигона содержит повторяющиеся элементы"
             )
         }
+
+        let elements_names = elements_names
+            .iter()
+            .map(|&x| String::from(x))
+            .collect::<Vec<String>>();
 
         // Формируем таблицу Кэли, состоящую из чисел, а не из строк,
         // то есть нам нужно заменить строчки на их уникальные коды.
@@ -41,12 +49,13 @@ impl Act {
                 elements_names
                     .iter()
                     .position(|t| *t == *s)
-                    .unwrap_or_else(|| panic!("В таблице присутствует символ `{}`, не указанный в списке элементов полигона",s))
+                    .unwrap_or_else(|| panic!("В таблице присутствует символ `{}`, не указанный в списке элементов полигона", s))
             })
-            .collect::<Vec<usize>>();
+            .map(|l| l as u32)
+            .collect::<Vec<u32>>();
 
         Self {
-            raw_act: RawAct::new(new_cayley_table, elements_names.len()),
+            raw_act: RawAct::new(&new_cayley_table, elements_names.len()),
             elements_names,
         }
     }
@@ -72,9 +81,8 @@ impl<'a> Congruence<Partition<'a>> for Act {
 
 impl std::fmt::Display for Act {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let act = &self.raw_act;
-
-        let rows = act.cayley_table.len() / act.columns;
+        let semigroup_size = self.raw_act.semigroup_size;
+        let act_size = self.raw_act.act_size;
 
         // Определяем строчку с максимальной длиной (для выравнивания печати)
         let max_len = self
@@ -84,16 +92,16 @@ impl std::fmt::Display for Act {
             .unwrap()
             .len();
 
-        for i in 0..rows {
+        for i in 0..semigroup_size {
             // Сначала печатаем название элемента
             write!(f, "{: >width$} | ", self.elements_names[i], width = max_len)?;
 
             // Теперь печатаем оставшуюся строчку
-            for j in 0..act.columns {
+            for j in 0..act_size {
                 write!(
                     f,
                     "{: >width$} ",
-                    self.elements_names[act.cayley_table[i * act.columns + j]],
+                    self.elements_names[self.raw_act.cayley_table[i * act_size + j] as usize],
                     width = max_len
                 )?;
             }
@@ -121,15 +129,7 @@ mod test {
             /* u */ "u", "u", "u",
         ];
 
-        let named_act = Act::from_string_table(
-            vec![
-                "x".to_string(),
-                "y".to_string(),
-                "z".to_string(),
-                "u".to_string(),
-            ],
-            &cayley_table,
-        );
+        let named_act = Act::from_str_table(&["x", "y", "z", "u"], &cayley_table);
 
         #[rustfmt::skip]
         assert_eq!(
@@ -156,16 +156,7 @@ mod test {
             /* u */ "u", "u", "u",
         ];
 
-        Act::from_string_table(
-            vec![
-                "x".to_string(),
-                "y".to_string(),
-                "u".to_string(),
-                "z".to_string(),
-                "u".to_string(),
-            ],
-            &cayley_table,
-        );
+        Act::from_str_table(&["x", "y", "u", "z", "u"], &cayley_table);
     }
 
     /// Проверяем, что попытка создать полигон с таблцией Кэли содержащей элемент
@@ -182,14 +173,6 @@ mod test {
             /* u */ "u", "u", "u",
         ];
 
-        Act::from_string_table(
-            vec![
-                "x".to_string(),
-                "y".to_string(),
-                "u".to_string(),
-                "z".to_string(),
-            ],
-            &cayley_table,
-        );
+        Act::from_str_table(&["x", "y", "u", "z"], &cayley_table);
     }
 }

@@ -52,6 +52,12 @@ fn get_unar_semichain(n: usize) -> Act {
     // Формируем алфавит
     let unar_elements_names = (0..n).map(|k| format!("x{}", k)).collect::<Vec<String>>();
 
+    // Преобразовываем Vec<String> -> Vec<&str>
+    let unar_elements_names_ref = unar_elements_names
+        .iter()
+        .map(|s| s.as_str())
+        .collect::<Vec<&str>>();
+
     let mut unar_table = Vec::<String>::with_capacity(n * (n - 1));
 
     // Формируем таблицу унара
@@ -71,7 +77,7 @@ fn get_unar_semichain(n: usize) -> Act {
     // Преобразовываем String -> &str
     let unar_table_ref = unar_table.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
 
-    Act::from_string_table(unar_elements_names, &unar_table_ref)
+    Act::from_str_table(&unar_elements_names_ref, &unar_table_ref)
 }
 
 /// Печатает множество конгруэнций унара.
@@ -88,32 +94,16 @@ fn print_unar_congruences(unar: Act) {
 }
 
 fn main() {
-    let unar_elements = vec![
-        "x".to_string(),
-        "y".to_string(),
-        "z".to_string(),
-        "u".to_string(),
-        "v".to_string(),
-        "w".to_string(),
-    ];
+    let unar_elements = vec!["x", "y", "z", "u", "v", "w"];
 
     print!("Конгруэнции унара из четырёх элементов: ");
-    print_unar_congruences(Act::from_string_table(
-        unar_elements[0..4].to_vec(),
-        &UNAR_4,
-    ));
+    print_unar_congruences(Act::from_str_table(&unar_elements[0..4], &UNAR_4));
 
     print!("Конгруэнции унара из пяти элементов: ");
-    print_unar_congruences(Act::from_string_table(
-        unar_elements[0..5].to_vec(),
-        &UNAR_5,
-    ));
+    print_unar_congruences(Act::from_str_table(&unar_elements[0..5], &UNAR_5));
 
     print!("Конгруэнции унара из шести элементов: ");
-    print_unar_congruences(Act::from_string_table(
-        unar_elements[0..6].to_vec(),
-        &UNAR_6,
-    ));
+    print_unar_congruences(Act::from_str_table(&unar_elements[0..6], &UNAR_6));
 
     print_unar_congruences(get_unar_semichain(9));
 }

@@ -1,7 +1,11 @@
 //! Примеры, приведённые здесь взяты из этой статьи: https://www.mathnet.ru/links/72a0f5ea28e6085fc3d2cfe72ca523a6/dvmg303.pdf,
 //! будем обозначать её далее как [1].
 
-use congruencer::{act::raw_act::RawAct, lattice::Lattice, partition::raw_partition::RawPartition};
+use congruencer::{
+    act::{raw_act::RawAct, Act},
+    lattice::Lattice,
+    partition::raw_partition::RawPartition,
+};
 
 mod acts_over_left_zero_semigroup {
     //! Модуль, содержащий таблицы простейших полигонов над полугруппой левых нулей.
@@ -22,7 +26,7 @@ mod acts_over_left_zero_semigroup {
     pub static P_DELTA: [BaseDataType; 4] = [0b1000, 0b0100, 0b0010, 0b0001]; // Δ
 
     #[rustfmt::skip]
-    pub static ACT_1: [usize; 4] = [
+    pub static ACT_1: [u32; 4] = [
         //       s1
         /* a */  1,
         /* 1 */  1,
@@ -31,7 +35,7 @@ mod acts_over_left_zero_semigroup {
     ];
 
     #[rustfmt::skip]
-    pub static ACT_2: [usize; 8] = [
+    pub static ACT_2: [u32; 8] = [
         //       s1  s2
         /* a */  1,  2,
         /* 1 */  1,  1,
@@ -51,9 +55,9 @@ fn is_slices_equal<T: PartialEq>(slice_1: &[T], slice_2: &[T]) -> bool {
 fn lattice_of_congruences_1() {
     use acts_over_left_zero_semigroup::*;
 
-    let act = RawAct::new(acts_over_left_zero_semigroup::ACT_1.to_vec(), 4);
+    let act = RawAct::new(&acts_over_left_zero_semigroup::ACT_1, 4);
 
-    let act_size = act.size();
+    let act_size = act.act_size;
 
     let congruence_set = act.new_congruence_set();
 
@@ -83,9 +87,9 @@ fn lattice_of_congruences_1() {
 fn lattice_of_congruences_2() {
     use acts_over_left_zero_semigroup::*;
 
-    let act = RawAct::new(acts_over_left_zero_semigroup::ACT_2.to_vec(), 4);
+    let act = RawAct::new(&acts_over_left_zero_semigroup::ACT_2, 4);
 
-    let act_size = act.size();
+    let act_size = act.act_size;
 
     let congruence_set = act.new_congruence_set();
 
@@ -105,4 +109,21 @@ fn lattice_of_congruences_2() {
 
     assert!(lattice.is_lattice());
     assert!(lattice.is_modular());
+}
+
+#[test]
+/// Проверяет корректность порождения решётки конгруэнций полигона над полгруппой парвых нулей.
+fn eq_3_lattice() {
+    #[rustfmt::skip]
+    let act_table = [
+        "1", "1", "1",
+        "2", "2", "2",
+        "3", "3", "3",
+    ];
+
+    let act = Act::from_str_table(&["1", "2", "3"], &act_table);
+
+    let congruence_set = act.new_congruence_set();
+
+    assert_eq!(congruence_set.len(), 5);
 }
