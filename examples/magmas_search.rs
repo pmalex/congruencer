@@ -1,12 +1,12 @@
 //! Последовательный перебор и распечатка ассоциативных и коммутативных бинарных операций.
 
-use congruencer::binary_operation::iterator::BinaryOperationIterator;
+use congruencer::magma::iterator::MagmaIterator;
 
 fn main() {
     // Итератор будет перебирать всевозможные бинарные операции, состоящие из 4 элементов.
-    let it = BinaryOperationIterator::new(4).filter(|f| f.is_associative() && f.is_commutative());
+    let it = MagmaIterator::new(4).filter(|f| f.is_associative() && f.is_commutative());
 
-    // Так как число всевозможных бинарных операций из 4 элементов равно 4^4 (что довольно много),
+    // Так как число всевозможных бинарных операций из 4 элементов равно 4^16 (что довольно много),
     // то для экономии времени распечатаем лишь первые 10 ассоциативных и коммутативных.
     for f in it.take(10) {
         println!("{}", f);

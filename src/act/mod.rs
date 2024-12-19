@@ -73,7 +73,7 @@ impl Act {
 }
 
 impl<'a> Congruence<Partition<'a>> for Act {
-    #[inline(always)]
+    #[inline]
     fn is_congruence(&self, named_partition: &Partition<'a>) -> bool {
         self.raw_act.is_congruence(&named_partition.raw_partition)
     }

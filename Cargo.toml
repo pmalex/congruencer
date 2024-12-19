@@ -11,3 +11,4 @@ itertools = "0.13.0"
 
 [dependencies]
 rayon = "1.5.3"
+rand = "0.8.5"

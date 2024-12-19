@@ -1,22 +1,22 @@
-use super::LongNaturalNumber;
+use super::LongNumber;
 
 #[derive(Clone)]
-pub struct LongNaturalNumberIterator {
-    long_number: LongNaturalNumber,
+pub struct LongNumberIterator {
+    long_number: LongNumber,
     end_is_reached: bool,
 }
 
-impl LongNaturalNumberIterator {
+impl LongNumberIterator {
     pub fn new(digits_number: usize, radix: usize) -> Self {
         Self {
-            long_number: LongNaturalNumber::zero(digits_number, radix),
+            long_number: LongNumber::zero(digits_number, radix),
             end_is_reached: false,
         }
     }
 }
 
-impl Iterator for LongNaturalNumberIterator {
-    type Item = LongNaturalNumber;
+impl Iterator for LongNumberIterator {
+    type Item = LongNumber;
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.end_is_reached {
@@ -56,39 +56,39 @@ impl Iterator for LongNaturalNumberIterator {
 fn long_binary() {
     let radix = 2;
 
-    let mut long_number_it = LongNaturalNumberIterator::new(3, radix);
+    let mut long_number_it = LongNumberIterator::new(3, radix);
 
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 0, 0], radix))
+        Some(LongNumber::from_slice(&[0, 0, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 0, 0], radix))
+        Some(LongNumber::from_slice(&[1, 0, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 1, 0], radix))
+        Some(LongNumber::from_slice(&[0, 1, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 1, 0], radix))
+        Some(LongNumber::from_slice(&[1, 1, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 0, 1], radix))
+        Some(LongNumber::from_slice(&[0, 0, 1], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 0, 1], radix))
+        Some(LongNumber::from_slice(&[1, 0, 1], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 1, 1], radix))
+        Some(LongNumber::from_slice(&[0, 1, 1], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 1, 1], radix))
+        Some(LongNumber::from_slice(&[1, 1, 1], radix))
     );
     assert_eq!(long_number_it.next(), None);
     assert_eq!(long_number_it.next(), None);
@@ -99,43 +99,43 @@ fn long_binary() {
 fn long_ternary() {
     let radix = 3;
 
-    let mut long_number_it = LongNaturalNumberIterator::new(2, radix);
+    let mut long_number_it = LongNumberIterator::new(2, radix);
 
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 0], radix))
+        Some(LongNumber::from_slice(&[0, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 0], radix))
+        Some(LongNumber::from_slice(&[1, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[2, 0], radix))
+        Some(LongNumber::from_slice(&[2, 0], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 1], radix))
+        Some(LongNumber::from_slice(&[0, 1], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 1], radix))
+        Some(LongNumber::from_slice(&[1, 1], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[2, 1], radix))
+        Some(LongNumber::from_slice(&[2, 1], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[0, 2], radix))
+        Some(LongNumber::from_slice(&[0, 2], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[1, 2], radix))
+        Some(LongNumber::from_slice(&[1, 2], radix))
     );
     assert_eq!(
         long_number_it.next(),
-        Some(LongNaturalNumber::from_raw_slice(&[2, 2], radix))
+        Some(LongNumber::from_slice(&[2, 2], radix))
     );
     assert_eq!(long_number_it.next(), None);
     assert_eq!(long_number_it.next(), None);

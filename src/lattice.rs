@@ -1,14 +1,14 @@
 use rayon::{
-    iter::IndexedParallelIterator,
+    iter::{IndexedParallelIterator, IntoParallelRefMutIterator},
     prelude::{IntoParallelIterator, ParallelIterator},
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::binary_operation::BinaryOperation;
+use crate::magma::Magma;
 
 pub struct Lattice {
-    sup: BinaryOperation,
-    inf: BinaryOperation,
+    sup: Magma,
+    inf: Magma,
 }
 
 impl Lattice {
@@ -140,9 +140,10 @@ where
 
         let (sup, inf) = rayon::join(
             || {
-                let mut sup = BinaryOperation::zero(poset.len());
+                let mut sup = Magma::zero(poset.len());
 
-                sup.par_iter_mut()
+                sup.cayley_table
+                    .par_iter_mut()
                     .enumerate()
                     .for_each(|(absolute_index, result_index)| {
                         // Here we calculate an indexes that lie inside the 0..number_of_elements range.
@@ -213,9 +214,10 @@ where
                 sup
             },
             || {
-                let mut inf = BinaryOperation::zero(poset.len());
+                let mut inf = Magma::zero(poset.len());
 
-                inf.par_iter_mut()
+                inf.cayley_table
+                    .par_iter_mut()
                     .enumerate()
                     .for_each(|(absolute_index, result_index)| {
                         // Here we calculate an indexes that lie inside the 0..number_of_elements range.

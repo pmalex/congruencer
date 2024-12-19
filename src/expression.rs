@@ -2,11 +2,11 @@
 //! на произвольной решётке. И также это нужно для поиска тождеств, выполняющихся
 //! на произвольной решётке.
 
-use crate::{binary_operation::BinaryOperation, ElementIndex};
+use crate::{magma::Magma, ElementIndex};
 
 pub enum Expression {
     Variable(char),
-    Node(Box<Expression>, BinaryOperation, Box<Expression>),
+    Node(Box<Expression>, Magma, Box<Expression>),
 }
 
 impl Expression {

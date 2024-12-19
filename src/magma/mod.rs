@@ -2,19 +2,20 @@
 
 pub mod iterator;
 
-use rayon::prelude::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::fmt::Display;
 
-use crate::ElementIndex;
+use crate::{long_number::LongNumber, ElementIndex};
 
-pub struct BinaryOperation {
-    cayley_table: Vec<ElementIndex>,
+/// Magma, Binar or Groupoid.
+pub struct Magma {
+    pub cayley_table: Vec<ElementIndex>,
 
     /// Размер множества, на котором определена бинарная операция.
     pub set_size: usize,
 }
 
-impl BinaryOperation {
+impl Magma {
     pub fn zero(set_size: usize) -> Self {
         Self {
             cayley_table: vec![0; set_size * set_size],
@@ -22,6 +23,7 @@ impl BinaryOperation {
         }
     }
 
+    /// Создаёт бинарную операцию из переданной таблицы Кэли.
     pub fn from_cayley_table(table: &[ElementIndex]) -> Self {
         let set_size = (table.len() as f32).sqrt() as usize;
 
@@ -33,13 +35,20 @@ impl BinaryOperation {
         }
     }
 
+    #[inline]
+    /// Создаёт случайную бинарную операцию.
+    pub fn random(set_size: usize) -> Self {
+        LongNumber::random(set_size * set_size, set_size).into()
+    }
+
     #[inline(always)]
     /// Applies a binary operation to an arguments.
     pub fn call(&self, a: ElementIndex, b: ElementIndex) -> ElementIndex {
         debug_assert!(a < self.set_size);
         debug_assert!(b < self.set_size);
+        debug_assert!(a * self.set_size + b < self.cayley_table.len());
 
-        self.cayley_table[a * self.set_size + b]
+        unsafe { *self.cayley_table.get_unchecked(a * self.set_size + b) }
     }
 
     pub fn is_idempotent(&self) -> bool {
@@ -72,19 +81,31 @@ impl BinaryOperation {
                 self.call(self.call(a, b), c) == self.call(a, self.call(b, c))
             })
     }
+}
 
-    #[inline]
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<ElementIndex> {
-        self.cayley_table.iter_mut()
-    }
+impl From<LongNumber> for Magma {
+    fn from(long_number: LongNumber) -> Self {
+        let LongNumber { digits, radix } = long_number;
 
-    #[inline]
-    pub fn par_iter_mut(&mut self) -> rayon::slice::IterMut<ElementIndex> {
-        self.cayley_table.par_iter_mut()
+        // The number of elements in a binary operation.
+        let set_size = {
+            let sqrt = (digits.len() as f32).sqrt() as usize;
+
+            debug_assert_eq!(sqrt * sqrt, digits.len());
+
+            sqrt
+        };
+
+        debug_assert!(radix >= set_size);
+
+        Self {
+            cayley_table: digits,
+            set_size: radix,
+        }
     }
 }
 
-impl Display for BinaryOperation {
+impl Display for Magma {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.cayley_table.len() < self.set_size * self.set_size {
             Err(std::fmt::Error)
@@ -128,61 +149,5 @@ impl Display for BinaryOperation {
 
             Ok(())
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::BinaryOperation;
-    use itertools::{iproduct, Itertools};
-
-    /// Simple (and slow) implementation.
-    fn is_commutative_slow(binary_operation: &BinaryOperation) -> bool {
-        (1..binary_operation.set_size).all(|element_a_index| {
-            (1..binary_operation.set_size).all(|element_b_index| {
-                binary_operation.call(element_a_index, element_b_index)
-                    == binary_operation.call(element_b_index, element_a_index)
-            })
-        })
-    }
-
-    /// Simple (and slow) implementation.
-    fn is_associative_slow(binary_operation: &BinaryOperation) -> bool {
-        iproduct!(
-            (0..binary_operation.set_size),
-            (0..binary_operation.set_size),
-            (0..binary_operation.set_size)
-        )
-        .collect_vec()
-        .into_iter()
-        .all(|(a, b, c)| {
-            binary_operation.call(binary_operation.call(a, b), c)
-                == binary_operation.call(a, binary_operation.call(b, c))
-        })
-    }
-
-    #[test]
-    fn is_commutative() {
-        // TODO: вбить вместо нулевых конкретные бинарные операции, сгенерированные итератором по ним.
-        let binary_operation = BinaryOperation::zero(20);
-
-        assert_eq!(
-            binary_operation.is_commutative(),
-            is_commutative_slow(&binary_operation)
-        );
-    }
-
-    #[test]
-    fn is_associative() {
-        let mut binary_operation = BinaryOperation::zero(20);
-
-        for element in binary_operation.iter_mut() {
-            *element = 0;
-        }
-
-        assert_eq!(
-            binary_operation.is_associative(),
-            is_associative_slow(&binary_operation)
-        );
     }
 }
