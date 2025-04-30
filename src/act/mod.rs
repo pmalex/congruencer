@@ -11,7 +11,7 @@ pub mod raw_act;
 pub struct Act {
     raw_act: RawAct,
 
-    /// Имена элеменов множества в текстовом (понятном человеку) виде.
+    /// Имена элеменов полигона в текстовом (понятном человеку) виде.
     elements_names: Vec<String>,
 }
 
@@ -33,7 +33,7 @@ impl Act {
                 elements_names.len(),
                 act_elements_names_vec.len(),
                 "Список элементов полигона содержит повторяющиеся элементы"
-            )
+            );
         }
 
         // Преобразовываем Vec<String> -> Vec<&str>
@@ -59,6 +59,33 @@ impl Act {
             raw_act: RawAct::new(&new_cayley_table, elements_names.len()),
             elements_names,
         }
+    }
+
+    /// Дизъюнктное (непересекающееся) объединение полигонов.
+    pub fn coproduct(&mut self, rhs: &Self) {
+        // Переименовываем элементы второго полигона таким образом, чтобы
+        // у него не было ни одного общего имени с элементами первого полигона.
+        let renamed_elements = rhs
+            .elements_names
+            .iter()
+            .map(|name| {
+                // Проверяем, что имена элементов второго полигона отличаются от имён первого.
+                if self.elements_names.contains(name) {
+                    // Добавляем к имени штрих
+                    let mut new_name = name.clone();
+                    new_name.push('\'');
+                    new_name
+                } else {
+                    name.clone()
+                }
+            })
+            .collect::<Vec<_>>();
+
+        // Теперь нужно объединить два базовых полигона в один
+        self.raw_act.coproduct(&rhs.raw_act);
+
+        // И объединяем списки элементов
+        self.elements_names.extend_from_slice(&renamed_elements);
     }
 
     /// Создание решётки конгруэнций из всевозможных разбиений элементов полигона.

@@ -7,7 +7,7 @@ use crate::{
 
 /// Полигон над полугруппой.
 pub struct RawAct {
-    pub(crate) cayley_table: Vec<u32>,
+    pub cayley_table: Vec<u32>,
 
     pub semigroup_size: usize,
     pub act_size: usize,
@@ -31,6 +31,11 @@ impl RawAct {
             act_size * semigroup_size,
             cayley_table.len(),
             "Размер полигона и полугруппы не соответствуют переданной таблице Кэли"
+        );
+
+        assert!(
+            cayley_table.iter().all(|&u| u <= act_size as u32),
+            "В таблице Кэли присутствует элемент, не соответствующий переданному размеру полигона"
         );
 
         Self {
@@ -78,6 +83,28 @@ impl RawAct {
         result
     }
 
+    /// Дизъюнктное (непересекающееся) объединение полигонов.
+    pub fn coproduct(&mut self, rhs: &Self) {
+        assert_eq!(self.semigroup_size, rhs.semigroup_size);
+        assert_eq!(
+            self.cayley_table.len() / self.act_size,
+            rhs.cayley_table.len() / rhs.act_size
+        );
+
+        // Находим индекс максимального элемента в таблице умножения полигона
+        let max_index = self.act_size - 1;
+
+        // С этого индекса будет начинаться нумерация элементов второго полигона
+        let start_index = max_index + 1;
+
+        // Прибавляем этот индекс ко всем элементам таблицы rhs.cayley_table
+        // и расширяем self.cayley_table за счёт rhs.cayley_table с увеличенным индексом.
+        self.cayley_table
+            .extend(rhs.cayley_table.iter().map(|&u| u + start_index as u32));
+
+        self.act_size += rhs.act_size;
+    }
+
     /// Создание решётки конгруэнций из всевозможных разбиений элементов полигона.
     pub fn new_congruence_set(&self) -> Vec<RawPartition>
     where
@@ -91,7 +118,7 @@ impl RawAct {
 }
 
 impl Congruence<RawPartition> for RawAct {
-    /// Возвращает true, если переданное разбиение является конгруэнцией.
+    /// Возвращает true, если переданное разбиение полигона является конгруэнцией.
     fn is_congruence<'a>(&self, partition: &RawPartition) -> bool {
         let act = self;
         let semigroup_size = self.semigroup_size;
