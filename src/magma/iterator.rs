@@ -1,7 +1,7 @@
 use super::Magma;
 use crate::long_number::iterator::LongNumberIterator;
 
-/// Итератор, перебирающий всевозможные бинарные операции конченого множества.
+/// Итератор, перебирающий всевозможные бинарные операции конeчного множества.
 pub struct MagmaIterator(LongNumberIterator);
 
 impl MagmaIterator {

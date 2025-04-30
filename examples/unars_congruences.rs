@@ -43,39 +43,71 @@ const UNAR_6: [&str; 30] = [
     /* w */  "w", "w", "w", "w", "w",
 ];
 
-/// Функция, порождающая унар-полуцепь из n элементов:
+#[rustfmt::skip]
+/// Цикл из трёх элементов
+const CYCLE3: [&str; 3] = [
+    //         a
+    /* x1 */  "x2",
+    /* x2 */  "x3",
+    /* x3 */  "x1",
+];
+
+#[rustfmt::skip]
+/// Цикл из четырёх элементов
+const CYCLE4: [&str; 8] = [
+    //         a     a^2
+    /* x1 */  "x2", "x3",
+    /* x2 */  "x3", "x4",
+    /* x3 */  "x4", "x1",
+    /* x4 */  "x1", "x2"
+];
+
+/// Функция, порождающая конечный унар-полуцепь из n элементов:
 ///
 /// x_1 → x_2 → x_3 → ... → x_n ↺
-fn get_unar_semichain(n: usize) -> Act {
+fn gen_unar_semichain(n: usize) -> Act {
     assert!(n > 0);
 
     // Формируем алфавит
-    let unar_elements_names = (0..n).map(|k| format!("x{}", k)).collect::<Vec<String>>();
+    let unar_elements_names = (1..=n).map(|k| format!("x{k}")).collect::<Vec<String>>();
 
     // Преобразовываем Vec<String> -> Vec<&str>
     let unar_elements_names_ref = unar_elements_names
         .iter()
-        .map(|s| s.as_str())
+        .map(String::as_str)
         .collect::<Vec<&str>>();
 
-    let mut unar_table = Vec::<String>::with_capacity(n * (n - 1));
-
-    // Формируем таблицу унара
-    for i in 0..n {
-        for j in i..n - 1 {
-            unar_table.push(format!("x{}", j + 1));
-        }
-
-        // Добавляем остаток
-        for _ in 0..i {
-            unar_table.push(format!("x{}", n - 1));
-        }
-    }
-
-    assert_eq!(unar_table.len(), n * (n - 1));
+    let unar_table: Vec<String> = (1..n)
+        .map(|k| format!("x{}", k + 1))
+        .chain(std::iter::once(format!("x{n}")))
+        .collect();
 
     // Преобразовываем String -> &str
-    let unar_table_ref = unar_table.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
+    let unar_table_ref = unar_table.iter().map(String::as_str).collect::<Vec<&str>>();
+
+    Act::from_str_table(&unar_elements_names_ref, &unar_table_ref)
+}
+
+/// Порождает цикл (унар) длиной n.
+fn gen_cycle(n: usize) -> Act {
+    assert!(n > 0);
+
+    // Формируем алфавит
+    let unar_elements_names = (1..=n).map(|k| format!("x{k}")).collect::<Vec<String>>();
+
+    // Преобразовываем Vec<String> -> Vec<&str>
+    let unar_elements_names_ref = unar_elements_names
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<&str>>();
+
+    let unar_table: Vec<String> = (1..n)
+        .map(|k| format!("x{}", k + 1))
+        .chain(std::iter::once(format!("x1")))
+        .collect();
+
+    // Преобразовываем String -> &str
+    let unar_table_ref = unar_table.iter().map(String::as_str).collect::<Vec<&str>>();
 
     Act::from_str_table(&unar_elements_names_ref, &unar_table_ref)
 }
@@ -105,6 +137,16 @@ fn main() {
     print!("Конгруэнции унара из шести элементов: ");
     print_unar_congruences(Act::from_str_table(&unar_elements[0..6], &UNAR_6));
 
-    print!("Конгруэнции унара-полуцепи: ");
-    print_unar_congruences(get_unar_semichain(9));
+    print!("Конгруэнции унара-полуцепи из 9 элементов: ");
+    print_unar_congruences(gen_unar_semichain(9));
+
+    print!("Конгруэнции 3-цикла: ");
+    print_unar_congruences(Act::from_str_table(&["x1", "x2", "x3"], &CYCLE3));
+
+    print!("Конгруэнции 4-цикла: ");
+    print_unar_congruences(Act::from_str_table(&["x1", "x2", "x3", "x4"], &CYCLE4));
+
+    for k in 1..13 {
+        print_unar_congruences(gen_cycle(k));
+    }
 }

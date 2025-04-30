@@ -7,7 +7,7 @@ use std::fmt::Display;
 
 use crate::{long_number::LongNumber, ElementIndex};
 
-/// Magma, Binar or Groupoid.
+/// Магма, бинар или группоид
 pub struct Magma {
     pub cayley_table: Vec<ElementIndex>,
 

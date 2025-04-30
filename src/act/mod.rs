@@ -36,6 +36,7 @@ impl Act {
             )
         }
 
+        // Преобразовываем Vec<String> -> Vec<&str>
         let elements_names = elements_names
             .iter()
             .map(|&x| String::from(x))
@@ -92,16 +93,19 @@ impl std::fmt::Display for Act {
             .unwrap()
             .len();
 
-        for i in 0..semigroup_size {
+        // Строчка содержит информацию о том, какие элементы будут получаться
+        // при умножении на каждый элемент полугруппы.
+        for k in 0..act_size {
             // Сначала печатаем название элемента
-            write!(f, "{: >width$} | ", self.elements_names[i], width = max_len)?;
+            write!(f, "{: >width$} | ", self.elements_names[k], width = max_len)?;
 
-            // Теперь печатаем оставшуюся строчку
-            for j in 0..act_size {
+            // Теперь печатаем результаты умножения элемента полигона
+            // на каждый элемент полгруппы.
+            for l in 0..semigroup_size {
                 write!(
                     f,
                     "{: >width$} ",
-                    self.elements_names[self.raw_act.cayley_table[i * act_size + j] as usize],
+                    self.elements_names[self.raw_act.cayley_table[k * semigroup_size + l] as usize],
                     width = max_len
                 )?;
             }
