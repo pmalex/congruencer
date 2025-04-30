@@ -34,10 +34,10 @@ impl LongNumber {
         assert!(radix > 0);
         assert!(digits > 0);
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let digits = (0..digits)
-            .map(|_| rand::Rng::gen_range(&mut rng, 0..radix))
+            .map(|_| rand::Rng::random_range(&mut rng, 0..radix))
             .collect::<Vec<usize>>();
 
         Self { digits, radix }

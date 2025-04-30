@@ -105,5 +105,6 @@ fn main() {
     print!("Конгруэнции унара из шести элементов: ");
     print_unar_congruences(Act::from_str_table(&unar_elements[0..6], &UNAR_6));
 
+    print!("Конгруэнции унара-полуцепи: ");
     print_unar_congruences(get_unar_semichain(9));
 }
