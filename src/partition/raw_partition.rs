@@ -42,7 +42,7 @@ impl RawPartition {
 
     #[inline]
     /// Возвращает итератор, обходящий каждый кусок разбиения.
-    pub fn to_iter(&self) -> std::slice::Iter<BaseDataType> {
+    pub fn to_iter(&self) -> std::slice::Iter<'_, BaseDataType> {
         self.data.iter()
     }
 

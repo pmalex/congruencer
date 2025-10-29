@@ -89,7 +89,7 @@ impl Act {
     }
 
     /// Создание решётки конгруэнций из всевозможных разбиений элементов полигона.
-    pub fn new_congruence_set(&self) -> Vec<Partition>
+    pub fn new_congruence_set(&self) -> Vec<Partition<'_>>
     where
         Self: Sync,
     {

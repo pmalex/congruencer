@@ -65,7 +65,7 @@ const CYCLE4: [&str; 8] = [
 /// Функция, порождающая конечный унар-полуцепь из n элементов:
 ///
 /// x_1 → x_2 → x_3 → ... → x_n ↺
-fn gen_ray(n: usize, prefix: &str) -> Act {
+fn gen_semichain(n: usize, prefix: &str) -> Act {
     assert!(n > 0);
 
     // Формируем алфавит
@@ -93,7 +93,7 @@ fn gen_ray(n: usize, prefix: &str) -> Act {
 /// Порождает цикл (унар) длиной n.
 fn gen_cycle(n: usize, prefix: &str) -> Act {
     assert!(n > 0);
-    assert!(prefix.len() > 0);
+    assert!(!prefix.is_empty());
 
     // Формируем алфавит
     let unar_elements_names = (1..=n)
@@ -131,7 +131,7 @@ fn print_unar_congruences(unar: &Act) {
 }
 
 fn main() {
-    let unar_elements = vec!["x", "y", "z", "u", "v", "w"];
+    let unar_elements = ["x", "y", "z", "u", "v", "w"];
 
     print!("Конгруэнции унара из четырёх элементов: ");
     print_unar_congruences(&Act::from_str_table(&unar_elements[0..4], &UNAR_4));
@@ -143,7 +143,7 @@ fn main() {
     print_unar_congruences(&Act::from_str_table(&unar_elements[0..6], &UNAR_6));
 
     print!("Конгруэнции унара-полуцепи из 9 элементов: ");
-    print_unar_congruences(&gen_ray(9, "x"));
+    print_unar_congruences(&gen_semichain(9, "x"));
 
     print!("Конгруэнции 3-цикла: ");
     print_unar_congruences(&Act::from_str_table(&["x1", "x2", "x3"], &CYCLE3));
@@ -163,9 +163,9 @@ fn main() {
     println!("{}", act_1);
     print_unar_congruences(&act_1);
 
-    println!("Копроизведение лучей: ");
-    let mut act_1 = gen_ray(3, "x");
-    let act_2 = gen_ray(4, "y");
+    println!("Копроизведение полуцепей: ");
+    let mut act_1 = gen_semichain(3, "x");
+    let act_2 = gen_semichain(3, "y");
     act_1.coproduct(&act_2);
     println!("{}", act_1);
     print_unar_congruences(&act_1);

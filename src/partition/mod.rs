@@ -12,7 +12,7 @@ pub struct Partition<'a> {
 
 #[inline]
 /// Возвращает вектор, содержащий всевозможные разбиения конечного множества.
-pub fn new_partitions_set(elements_names: &[String]) -> Vec<Partition> {
+pub fn new_partitions_set(elements_names: &[String]) -> Vec<Partition<'_>> {
     // Удостоверяемся, что `act_elements` содержит только уникальные элементы.
     {
         let mut set_elements_names_vec = elements_names.to_vec();
