@@ -121,6 +121,8 @@ fn gen_cycle(n: usize, prefix: &str) -> Act {
 fn print_unar_congruences(unar: &Act) {
     let unar_congruence_set = unar.new_congruence_set();
 
+    partitions_set_print_dot(&unar_congruence_set);
+
     print!("{{");
 
     for named_partition in unar_congruence_set {
@@ -169,4 +171,23 @@ fn main() {
     act_1.coproduct(&act_2);
     println!("{}", act_1);
     print_unar_congruences(&act_1);
+}
+
+/// Prints a partitions set in the Graphiz Dot format.
+fn partitions_set_print_dot(partitions_set: &[congruencer::partition::Partition]) {
+    println!("graph lattice {{");
+    println!("\trankdir = TB;");
+    println!("\tratio = 0.75;");
+    println!("\tnode[shape = none];");
+    println!();
+
+    for partition in partitions_set {
+        for nearest_upper_bound in
+            congruencer::poset::nearest_incomparable_lower_bounds(partitions_set, partition)
+        {
+            println!("\t\"{}\" -- \"{}\"", partition, nearest_upper_bound)
+        }
+    }
+
+    println!("}}");
 }
