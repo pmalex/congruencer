@@ -2,7 +2,7 @@
 name = "congruencer"
 version = "0.1.0"
 authors = ["Alexey Pryanichnikov <genary@ya.ru>"]
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -10,5 +10,5 @@ edition = "2021"
 itertools = "0.14"
 
 [dependencies]
-rayon = "1.5.3"
-rand = "0.9"
+rayon = "1.11"
+rand = "0.10"
